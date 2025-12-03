@@ -1,346 +1,298 @@
-# NBA Prediction System - Project Structure
+# NBA Tracker & Predictor
 
-## Complete Directory Tree
+AI-powered NBA game predictions and player statistics tracking application.
 
-```
-Cocots-Sports/
-├── ARCHITECTURE.md                 # System architecture & data flow
-├── ML_OPERATIONS.md                # ML pipeline & retraining docs
-├── README.md                       # Main project documentation
-│
-├── backend/                        # FastAPI ML Service
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── Dockerfile
-│   ├── README.md
-│   ├── requirements.txt
-│   │
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                 # FastAPI application entry
-│   │   │
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       ├── __init__.py
-│   │   │       ├── predictions.py  # /predict endpoint
-│   │   │       ├── teams.py        # Team endpoints
-│   │   │       ├── players.py      # Player endpoints
-│   │   │       └── games.py        # Games endpoints
-│   │   │
-│   │   ├── core/
-│   │   │   ├── __init__.py
-│   │   │   ├── config.py           # Environment settings
-│   │   │   ├── cache.py            # Redis cache service
-│   │   │   └── supabase.py         # Supabase client
-│   │   │
-│   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── model_service.py    # ML model loading & prediction
-│   │   │   └── nba_service.py      # NBA API integration
-│   │   │
-│   │   └── ml/
-│   │       ├── __init__.py
-│   │       ├── train.py            # Model training script
-│   │       ├── retrain_pipeline.py # Automated retraining
-│   │       └── data_collector.py   # Feature engineering
-│   │
-│   ├── models/
-│   │   ├── .gitkeep
-│   │   └── v1/
-│   │       ├── model.pkl           # Trained XGBoost model
-│   │       ├── scaler.pkl          # Feature scaler
-│   │       ├── features.txt        # Feature names
-│   │       └── metadata.json       # Training metrics
-│   │
-│   ├── data/
-│   │   ├── .gitkeep
-│   │   └── training_data.csv       # Historical game data
-│   │
-│   └── supabase/
-│       ├── schema.sql              # Database schema
-│       └── seed.sql                # Seed data (teams)
-│
-└── frontend/
-    └── my-app/                     # Next.js App
-        ├── .env.local.example
-        ├── .gitignore
-        ├── next.config.ts
-        ├── package.json
-        ├── tsconfig.json
-        ├── tailwind.config.ts
-        ├── postcss.config.mjs
-        ├── eslint.config.mjs
-        │
-        ├── app/
-        │   ├── layout.tsx          # Root layout
-        │   ├── page.tsx            # Landing page
-        │   ├── globals.css
-        │   │
-        │   ├── (auth)/
-        │   │   ├── login/
-        │   │   │   └── page.tsx
-        │   │   └── signup/
-        │   │       └── page.tsx
-        │   │
-        │   ├── dashboard/
-        │   │   └── page.tsx        # User dashboard (SSR)
-        │   │
-        │   ├── predictions/
-        │   │   ├── page.tsx        # Prediction history
-        │   │   └── new/
-        │   │       └── page.tsx    # Create prediction
-        │   │
-        │   ├── teams/
-        │   │   ├── page.tsx        # All teams
-        │   │   └── [id]/
-        │   │       └── page.tsx    # Team detail
-        │   │
-        │   └── profile/
-        │       └── page.tsx        # User settings
-        │
-        ├── components/
-        │   ├── predict-button.tsx      # Prediction form component
-        │   ├── prediction-history.tsx  # List predictions
-        │   ├── accuracy-stats.tsx      # User accuracy display
-        │   │
-        │   └── ui/                     # Reusable UI components
-        │       ├── button.tsx
-        │       ├── card.tsx
-        │       ├── badge.tsx
-        │       └── progress.tsx
-        │
-        ├── lib/
-        │   ├── utils.ts                # Utility functions
-        │   ├── types.ts                # TypeScript interfaces
-        │   │
-        │   ├── supabase/
-        │   │   ├── client.ts           # Browser client
-        │   │   └── server.ts           # Server client (SSR)
-        │   │
-        │   └── actions/
-        │       ├── predictions.ts      # Prediction server actions
-        │       └── auth.ts             # Auth server actions
-        │
-        └── public/
-            └── (static assets)
-```
-
-## Key Files Explained
-
-### Backend
-
-**`app/main.py`**
-
-- FastAPI application setup
-- CORS middleware
-- API route registration
-- Lifespan events (model loading)
-
-**`app/api/v1/predictions.py`**
-
-- POST `/predict` - Generate prediction
-- GET `/history/{user_id}` - Prediction history
-- GET `/accuracy/{user_id}` - User accuracy stats
-
-**`app/services/model_service.py`**
-
-- `load_model()` - Load trained model
-- `predict()` - Generate game prediction
-- `preprocess_features()` - Transform input data
-
-**`app/ml/train.py`**
-
-- Train XGBoost model
-- Hyperparameter tuning
-- Save model artifacts
-- MLflow tracking
-
-**`app/ml/retrain_pipeline.py`**
-
-- Automated retraining scheduler
-- Drift detection
-- Data collection
-- Model deployment
-
-**`supabase/schema.sql`**
-
-- Complete database schema
-- RLS policies
-- Triggers & functions
-- Indexes
+## Tech Stack
 
 ### Frontend
 
-**`lib/supabase/server.ts`**
+- **Next.js 16** - React framework
+- **TypeScript** - Type safety
+- **TailwindCSS** - Styling
+- **Supabase** - Authentication & Database
+- **Recharts** - Data visualization
+- **Axios** - HTTP client
+- **Zod** - Schema validation
+- **Lucide React** - Icons
+- **Framer Motion** - Animations
 
-- Server-side Supabase client
-- Cookie-based auth
-- SSR support
+### Backend (ML Microservice)
 
-**`lib/actions/predictions.ts`**
+- **FastAPI** - API framework
+- **Uvicorn** - ASGI server
+- **XGBoost** - ML models
+- **scikit-learn** - ML utilities
+- **Pandas** - Data manipulation
+- **NumPy** - Numerical computing
+- **Requests** - NBA API calls
 
-- `createPrediction()` - Call FastAPI
-- `getUserPredictions()` - Fetch from Supabase
-- `getUserAccuracy()` - Accuracy metrics
+## Installation
 
-**`lib/actions/auth.ts`**
+### Prerequisites
 
-- `signUp()` - User registration
-- `signIn()` - Authentication
-- `updateUserProfile()` - Profile management
+- Node.js 18+ and npm/yarn/pnpm
+- Python 3.9+ (use `python3` on macOS)
+- Supabase account (for auth & DB)
 
-**`components/predict-button.tsx`**
+### Quick Start (Recommended)
 
-- Client component for predictions
-- Loading states
-- Error handling
-- Result display
-
-**`components/prediction-history.tsx`**
-
-- Display user predictions
-- Status badges (pending/correct/incorrect)
-- Game details
-
-## Getting Started
-
-### 1. Setup Backend
+Run both frontend and backend with a single command:
 
 ```bash
-cd backend
+# From the root directory
+npm install              # Install concurrently
+npm run install:all      # Install all dependencies for both frontend and backend
+npm run dev             # Start both servers simultaneously
+```
+
+This will start:
+
+- **Backend API** at `http://localhost:8000`
+- **Frontend** at `http://localhost:3000`
+
+### Manual Setup
+
+If you prefer to run them separately:
+
+#### Backend Setup
+
+```bash
+cd ml-api
+
+# Create virtual environment (use python3 on macOS)
+python3 -m venv venv
 
 # Install dependencies
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+./venv/bin/pip install -r requirements.txt
 
-# Configure environment
+# Create environment file
 cp .env.example .env
-# Edit .env with your credentials
 
-# Start services
-redis-server                    # Terminal 1
-mlflow ui --port 5000          # Terminal 2
-uvicorn app.main:app --reload  # Terminal 3
+# Edit .env with your configuration
+# PORT=8000
+# ALLOWED_ORIGINS=http://localhost:3000
+
+# Run backend only
+npm run dev:backend
 ```
 
-### 2. Setup Database
+Backend API will be available at `http://localhost:8000`
+
+#### Frontend Setup
 
 ```bash
-# Initialize Supabase project
-supabase init
-
-# Run schema
-supabase db push
-
-# Or manually in Supabase dashboard:
-# - Copy schema.sql and execute
-# - Copy seed.sql and execute
-```
-
-### 3. Setup Frontend
-
-```bash
-cd frontend/my-app
+cd frontend
 
 # Install dependencies
 npm install
 
-# Configure environment
-cp .env.local.example .env.local
-# Edit .env.local with Supabase credentials
+# Create environment file
+cp .env.example .env.local
 
-# Run dev server
-npm run dev
+# Edit .env.local with your Supabase credentials
+# NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+# NEXT_PUBLIC_ML_API_URL=http://localhost:8000/api/v1
+
+# Run frontend only
+npm run dev:frontend
 ```
 
-### 4. Train Initial Model
+Frontend will be available at `http://localhost:3000`
+
+# Run development server
+
+python -m app.main
+
+# Or use uvicorn directly
+
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+```
+
+Backend API will be available at `http://localhost:8000`
+
+## Project Structure
+
+```
+
+frontend/
+├── app/ # Next.js app directory
+│ ├── layout.tsx # Root layout
+│ ├── page.tsx # Homepage
+│ └── globals.css # Global styles
+├── lib/ # Utilities
+│ ├── api/ # API client
+│ │ ├── client.ts # Axios instance
+│ │ └── predictions.ts # ML API functions
+│ └── supabase/ # Supabase utilities
+│ ├── client.ts # Supabase clients
+│ └── auth.ts # Auth helpers
+├── components/ # React components (create as needed)
+└── .env.example # Environment variables template
+
+ml-api/
+├── app/
+│ ├── main.py # FastAPI app
+│ ├── models/ # ML model files
+│ ├── routes/ # API routes
+│ │ └── predict.py # Prediction endpoints
+│ ├── schemas/ # Pydantic schemas
+│ │ ├── predict_request.py
+│ │ └── predict_response.py
+│ └── services/ # Business logic
+│ ├── data_fetcher.py
+│ ├── feature_engineering.py
+│ └── model_loder.py
+├── training/ # ML training scripts
+│ ├── preprocess.py
+│ └── train_model.py
+├── requirements.txt # Python dependencies
+└── .env.example # Environment variables template
+
+````
+
+## API Endpoints
+
+### Backend ML API
+
+#### Health Check
+
+- `GET /` - API health check
+- `GET /health` - Detailed health status
+
+#### Predictions
+
+- `POST /api/v1/predict/game` - Predict game outcome
+- `POST /api/v1/predict/player` - Predict player stats
+
+#### Data
+
+- `GET /api/v1/teams` - Get all NBA teams
+- `GET /api/v1/players/{team_id}` - Get players for team
+
+## Development Workflow
+
+### Start Both Servers (Recommended)
 
 ```bash
-cd backend
+# From the root directory
+npm run dev
+````
 
-# Prepare training data (CSV with historical games)
-# Place in data/training_data.csv
+This runs both the backend (port 8000) and frontend (port 3000) simultaneously with colored output.
 
-# Train model
-python -m app.ml.train
+### Start Individually
 
-# Model saved to models/v1/
+```bash
+# Backend only
+npm run dev:backend
+
+# Frontend only
+npm run dev:frontend
 ```
+
+### Access Applications
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- Alternative Docs: http://localhost:8000/redoc
 
 ## Environment Variables
 
-### Backend `.env`
+### Frontend (.env.local)
 
-```
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_KEY=service_key_here
-NBA_API_KEY=rapidapi_key_here
-REDIS_URL=redis://localhost:6379
-MLFLOW_TRACKING_URI=http://localhost:5000
-MODEL_VERSION=v1
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_ML_API_URL=http://localhost:8000/api/v1
 ```
 
-### Frontend `.env.local`
+### Backend (.env)
 
+```env
+PORT=8000
+ALLOWED_ORIGINS=http://localhost:3000
+NBA_API_KEY=your_nba_api_key
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=anon_key_here
-FASTAPI_URL=http://localhost:8000
-```
 
-## API Flow Example
+## Next Steps
 
-**User creates prediction:**
+1. **Set up Supabase:**
 
-1. User clicks "Get Prediction" on `/predictions/new`
-2. `PredictButton` → `createPrediction()` server action
-3. Server action verifies Supabase auth
-4. POST to FastAPI `/api/v1/predictions/predict`
-5. FastAPI fetches team stats (cached in Redis)
-6. Model generates prediction
-7. FastAPI saves to Supabase `predictions` table
-8. Response returned to user
-9. UI updates with prediction result
+   - Create a Supabase project
+   - Set up authentication
+   - Create database tables for storing predictions/user data
+   - Add credentials to frontend `.env.local`
 
-## Production Checklist
+2. **Train ML Models:**
 
-- [ ] Update all `.env` files with production credentials
-- [ ] Run database migrations (`schema.sql`)
-- [ ] Train production model (`python -m app.ml.train`)
-- [ ] Deploy backend (Docker/Railway/Render)
-- [ ] Deploy frontend (Vercel)
-- [ ] Setup Redis (Upstash/Railway)
-- [ ] Configure Supabase RLS policies
-- [ ] Setup monitoring (Sentry/Datadog)
-- [ ] Configure custom domain
-- [ ] Enable HTTPS
-- [ ] Setup automated backups
+   - Collect NBA historical data
+   - Run training scripts in `ml-api/training/`
+   - Save trained models to `ml-api/app/models/`
 
-## Common Commands
+3. **Implement NBA API Integration:**
+
+   - Get NBA API credentials
+   - Update `data_fetcher.py` with real API calls
+   - Replace mock data with actual NBA statistics
+
+4. **Build Frontend Components:**
+
+   - Create prediction forms
+   - Build team/player dashboards
+   - Add data visualization with Recharts
+   - Implement authentication flows
+
+5. **Add Features:**
+   - User accounts and saved predictions
+   - Historical prediction tracking
+   - Advanced analytics and charts
+   - Real-time game updates
+
+## Useful Commands
+
+### Root Directory
 
 ```bash
-# Backend
-uvicorn app.main:app --reload          # Dev server
-python -m app.ml.train                 # Train model
-python -m app.ml.retrain_pipeline      # Start retraining
-pytest                                 # Run tests
+npm run dev              # Start both backend and frontend
+npm run dev:backend      # Start backend only
+npm run dev:frontend     # Start frontend only
+npm run install:all      # Install all dependencies
+npm run install:backend  # Install backend dependencies
+npm run install:frontend # Install frontend dependencies
+```
 
-# Frontend
-npm run dev                            # Dev server
-npm run build                          # Production build
-npm run lint                           # Lint code
+### Frontend
 
-# Database
-supabase db push                       # Apply migrations
-supabase db reset                      # Reset database
-supabase gen types typescript --local  # Generate types
+```bash
+cd frontend
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run linter
+```
+
+### Backend
+
+```bash
+cd ml-api
+# Using venv directly (no activation needed)
+./venv/bin/uvicorn app.main:app --reload  # Development
+./venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000  # Production
+./venv/bin/pip install <package>  # Install new package
 ```
 
 ## Resources
 
-- **Next.js**: https://nextjs.org/docs
-- **FastAPI**: https://fastapi.tiangolo.com
-- **Supabase**: https://supabase.com/docs
-- **XGBoost**: https://xgboost.readthedocs.io
-- **NBA API**: https://rapidapi.com/api-sports/api/api-basketball
+- [Next.js Documentation](https://nextjs.org/docs)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Supabase Documentation](https://supabase.com/docs)
+- [TailwindCSS Documentation](https://tailwindcss.com/docs)
+- [XGBoost Documentation](https://xgboost.readthedocs.io/)
+- [NBA Stats API](https://github.com/swar/nba_api)
+
+## License
+
+MIT

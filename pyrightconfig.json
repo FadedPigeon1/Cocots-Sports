@@ -1,0 +1,16 @@
+{
+  "venvPath": ".",
+  "venv": "ml-api/venv",
+  "include": [
+    "ml-api"
+  ],
+  "extraPaths": [
+    "ml-api",
+    "ml-api/venv/lib/python3.13/site-packages"
+  ],
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Darwin",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false
+}

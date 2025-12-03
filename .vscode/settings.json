@@ -1,0 +1,12 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/ml-api",
+    "${workspaceFolder}/ml-api/venv/lib/python3.13/site-packages"
+  ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/ml-api/venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.diagnosticMode": "workspace",
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic"
+}
