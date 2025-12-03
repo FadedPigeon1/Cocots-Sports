@@ -1,6 +1,116 @@
 import Link from "next/link";
-import { BarChart3, Activity, TrendingUp, Calendar } from "lucide-react";
+import Image from "next/image";
+import {
+  BarChart3,
+  Activity,
+  TrendingUp,
+  Calendar,
+  Trophy,
+} from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+
+// Mock Data for Standings (2025-26 Season)
+const WEST_STANDINGS = [
+  {
+    rank: 1,
+    team: "OKC Thunder",
+    record: "21-1",
+    logo: "https://cdn.nba.com/logos/nba/1610612760/global/L/logo.svg",
+  },
+  {
+    rank: 2,
+    team: "Denver Nuggets",
+    record: "18-4",
+    logo: "https://cdn.nba.com/logos/nba/1610612743/global/L/logo.svg",
+  },
+  {
+    rank: 3,
+    team: "Minnesota Timberwolves",
+    record: "16-5",
+    logo: "https://cdn.nba.com/logos/nba/1610612750/global/L/logo.svg",
+  },
+  {
+    rank: 4,
+    team: "Dallas Mavericks",
+    record: "15-6",
+    logo: "https://cdn.nba.com/logos/nba/1610612742/global/L/logo.svg",
+  },
+  {
+    rank: 5,
+    team: "Phoenix Suns",
+    record: "14-7",
+    logo: "https://cdn.nba.com/logos/nba/1610612756/global/L/logo.svg",
+  },
+  {
+    rank: 6,
+    team: "LA Lakers",
+    record: "14-8",
+    logo: "https://cdn.nba.com/logos/nba/1610612747/global/L/logo.svg",
+  },
+  {
+    rank: 7,
+    team: "Golden State Warriors",
+    record: "13-9",
+    logo: "https://cdn.nba.com/logos/nba/1610612744/global/L/logo.svg",
+  },
+  {
+    rank: 8,
+    team: "Sacramento Kings",
+    record: "12-10",
+    logo: "https://cdn.nba.com/logos/nba/1610612758/global/L/logo.svg",
+  },
+];
+
+const EAST_STANDINGS = [
+  {
+    rank: 1,
+    team: "Detroit Pistons",
+    record: "17-4",
+    logo: "https://cdn.nba.com/logos/nba/1610612765/global/L/logo.svg",
+  },
+  {
+    rank: 2,
+    team: "Boston Celtics",
+    record: "16-5",
+    logo: "https://cdn.nba.com/logos/nba/1610612738/global/L/logo.svg",
+  },
+  {
+    rank: 3,
+    team: "Milwaukee Bucks",
+    record: "15-6",
+    logo: "https://cdn.nba.com/logos/nba/1610612749/global/L/logo.svg",
+  },
+  {
+    rank: 4,
+    team: "Cleveland Cavaliers",
+    record: "14-7",
+    logo: "https://cdn.nba.com/logos/nba/1610612739/global/L/logo.svg",
+  },
+  {
+    rank: 5,
+    team: "Orlando Magic",
+    record: "13-8",
+    logo: "https://cdn.nba.com/logos/nba/1610612753/global/L/logo.svg",
+  },
+  {
+    rank: 6,
+    team: "New York Knicks",
+    record: "13-9",
+    logo: "https://cdn.nba.com/logos/nba/1610612752/global/L/logo.svg",
+  },
+  {
+    rank: 7,
+    team: "Philadelphia 76ers",
+    record: "12-9",
+    logo: "https://cdn.nba.com/logos/nba/1610612755/global/L/logo.svg",
+  },
+  {
+    rank: 8,
+    team: "Indiana Pacers",
+    record: "11-10",
+    logo: "https://cdn.nba.com/logos/nba/1610612754/global/L/logo.svg",
+  },
+];
 
 export default function Home() {
   return (
@@ -41,66 +151,107 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16 animate-fade-in">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
-            TRACK YOUR TEAM'S
+            2025-26 SEASON
             <span className="block text-neon-green drop-shadow-[0_0_10px_rgba(57,255,20,0.5)]">
-              PERFORMANCE
+              STANDINGS
             </span>
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Advanced analytics to track wins, losses, and historical trends.
-            Compare current season performance against previous years.
+            Live tracking of conference leaders and playoff pictures.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/dashboard"
-              className="bg-neon-green hover:bg-green-400 text-black px-8 py-3 rounded-lg font-bold transition-all hover:shadow-[0_0_20px_rgba(57,255,20,0.4)]"
-            >
-              Start Tracking
-            </Link>
-            <Link
-              href="/predictions"
-              className="border border-neon-green/50 hover:border-neon-green text-neon-green px-8 py-3 rounded-lg font-semibold transition-colors backdrop-blur-sm"
-            >
-              View Predictions
-            </Link>
-          </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all group">
-            <TrendingUp className="h-12 w-12 text-neon-green mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-bold text-white mb-2">
-              Performance Tracking
-            </h3>
-            <p className="text-gray-400">
-              Visualize win/loss trends with interactive graphs and real-time
-              data updates.
-            </p>
+        {/* Standings Grid */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-20">
+          {/* Western Conference */}
+          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl overflow-hidden">
+            <div className="bg-black/60 p-4 border-b border-neon-green/20 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <span className="text-neon-green">WESTERN</span> CONFERENCE
+              </h2>
+              <Trophy className="text-gray-600 h-6 w-6" />
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                {WEST_STANDINGS.map((team) => (
+                  <div
+                    key={team.team}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={`font-mono font-bold w-6 ${
+                          team.rank <= 6 ? "text-neon-green" : "text-gray-500"
+                        }`}
+                      >
+                        {team.rank}
+                      </span>
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src={team.logo}
+                          alt={team.team}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span className="font-semibold text-white group-hover:text-neon-green transition-colors">
+                        {team.team}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-white/80">
+                      {team.record}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all group">
-            <Calendar className="h-12 w-12 text-neon-green mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-bold text-white mb-2">
-              Historical Comparison
-            </h3>
-            <p className="text-gray-400">
-              Compare current season stats with previous years to spot
-              improvement trends.
-            </p>
-          </div>
-
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all group">
-            <BarChart3 className="h-12 w-12 text-neon-green mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-bold text-white mb-2">
-              AI Predictions
-            </h3>
-            <p className="text-gray-400">
-              Get ML-powered insights on upcoming games as a supplementary tool.
-            </p>
+          {/* Eastern Conference */}
+          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl overflow-hidden">
+            <div className="bg-black/60 p-4 border-b border-neon-green/20 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <span className="text-neon-green">EASTERN</span> CONFERENCE
+              </h2>
+              <Trophy className="text-gray-600 h-6 w-6" />
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                {EAST_STANDINGS.map((team) => (
+                  <div
+                    key={team.team}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={`font-mono font-bold w-6 ${
+                          team.rank <= 6 ? "text-neon-green" : "text-gray-500"
+                        }`}
+                      >
+                        {team.rank}
+                      </span>
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src={team.logo}
+                          alt={team.team}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span className="font-semibold text-white group-hover:text-neon-green transition-colors">
+                        {team.team}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-white/80">
+                      {team.record}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
