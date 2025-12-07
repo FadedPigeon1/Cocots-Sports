@@ -21,12 +21,55 @@ import {
 } from "recharts";
 import { Plus, X, Trophy, TrendingUp, Activity, Target } from "lucide-react";
 
-// Team Logo Mapping
-const TEAM_LOGOS: Record<string, string> = {
-  Pistons: "https://cdn.nba.com/logos/nba/1610612765/global/L/logo.svg",
-  Thunder: "https://cdn.nba.com/logos/nba/1610612760/global/L/logo.svg",
-  Lakers: "https://cdn.nba.com/logos/nba/1610612747/global/L/logo.svg",
-  Celtics: "https://cdn.nba.com/logos/nba/1610612738/global/L/logo.svg",
+// NBA Teams Data
+const EASTERN_CONFERENCE = [
+  { name: "Atlanta Hawks", id: "1610612737" },
+  { name: "Boston Celtics", id: "1610612738" },
+  { name: "Brooklyn Nets", id: "1610612751" },
+  { name: "Charlotte Hornets", id: "1610612766" },
+  { name: "Chicago Bulls", id: "1610612741" },
+  { name: "Cleveland Cavaliers", id: "1610612739" },
+  { name: "Detroit Pistons", id: "1610612765" },
+  { name: "Indiana Pacers", id: "1610612754" },
+  { name: "Miami Heat", id: "1610612748" },
+  { name: "Milwaukee Bucks", id: "1610612749" },
+  { name: "New York Knicks", id: "1610612752" },
+  { name: "Orlando Magic", id: "1610612753" },
+  { name: "Philadelphia 76ers", id: "1610612755" },
+  { name: "Toronto Raptors", id: "1610612761" },
+  { name: "Washington Wizards", id: "1610612764" },
+];
+
+const WESTERN_CONFERENCE = [
+  { name: "Dallas Mavericks", id: "1610612742" },
+  { name: "Denver Nuggets", id: "1610612743" },
+  { name: "Golden State Warriors", id: "1610612744" },
+  { name: "Houston Rockets", id: "1610612745" },
+  { name: "LA Clippers", id: "1610612746" },
+  { name: "LA Lakers", id: "1610612747" },
+  { name: "Memphis Grizzlies", id: "1610612763" },
+  { name: "Minnesota Timberwolves", id: "1610612750" },
+  { name: "New Orleans Pelicans", id: "1610612740" },
+  { name: "Oklahoma City Thunder", id: "1610612760" },
+  { name: "Phoenix Suns", id: "1610612756" },
+  { name: "Portland Trail Blazers", id: "1610612757" },
+  { name: "Sacramento Kings", id: "1610612758" },
+  { name: "San Antonio Spurs", id: "1610612759" },
+  { name: "Utah Jazz", id: "1610612762" },
+];
+
+const ALL_TEAMS = [...EASTERN_CONFERENCE, ...WESTERN_CONFERENCE];
+
+// Helper to get logo URL
+const getTeamLogo = (teamName: string) => {
+  const team = ALL_TEAMS.find(
+    (t) => t.name === teamName || t.name.includes(teamName)
+  );
+  if (team) {
+    return `https://cdn.nba.com/logos/nba/${team.id}/global/L/logo.svg`;
+  }
+  // Fallback for initial state or if not found (using Pistons as default/fallback)
+  return "https://cdn.nba.com/logos/nba/1610612765/global/L/logo.svg";
 };
 
 // Mock data for win/loss trend
@@ -69,7 +112,7 @@ const TEAM_STATS = [
 
 export default function TeamTracker() {
   const [showComparison, setShowComparison] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState("Pistons");
+  const [selectedTeam, setSelectedTeam] = useState("Detroit Pistons");
   const [isEditing, setIsEditing] = useState(false);
 
   const data = MOCK_DATA.map((item, index) => ({
@@ -85,7 +128,7 @@ export default function TeamTracker() {
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 bg-white/5 rounded-full p-2 border border-white/10">
               <Image
-                src={TEAM_LOGOS[selectedTeam] || TEAM_LOGOS["Pistons"]}
+                src={getTeamLogo(selectedTeam)}
                 alt={`${selectedTeam} Logo`}
                 fill
                 className="object-contain p-2"
@@ -115,10 +158,10 @@ export default function TeamTracker() {
             <h3 className="text-white font-semibold mb-3">
               Dashboard Controls
             </h3>
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-4 flex-wrap items-end">
               <button
                 onClick={() => setShowComparison(!showComparison)}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`px-4 py-2 rounded-lg border transition-colors h-[42px] ${
                   showComparison
                     ? "bg-neon-green text-black border-neon-green"
                     : "bg-transparent text-white border-white/20 hover:border-neon-green"
@@ -127,16 +170,57 @@ export default function TeamTracker() {
                 {showComparison ? "Hide 2024 Comparison" : "Compare with 2024"}
               </button>
 
-              <select
-                value={selectedTeam}
-                onChange={(e) => setSelectedTeam(e.target.value)}
-                className="bg-black border border-white/20 text-white rounded-lg px-4 py-2 focus:border-neon-green outline-none"
-              >
-                <option value="Pistons">Detroit Pistons</option>
-                <option value="Thunder">OKC Thunder</option>
-                <option value="Lakers">Lakers</option>
-                <option value="Celtics">Celtics</option>
-              </select>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400 ml-1">
+                  Eastern Conference
+                </label>
+                <select
+                  value={
+                    EASTERN_CONFERENCE.some((t) => t.name === selectedTeam)
+                      ? selectedTeam
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) setSelectedTeam(e.target.value);
+                  }}
+                  className="bg-black border border-white/20 text-white rounded-lg px-4 py-2 focus:border-neon-green outline-none min-w-[200px]"
+                >
+                  <option value="" disabled>
+                    Select East Team
+                  </option>
+                  {EASTERN_CONFERENCE.map((team) => (
+                    <option key={team.id} value={team.name}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400 ml-1">
+                  Western Conference
+                </label>
+                <select
+                  value={
+                    WESTERN_CONFERENCE.some((t) => t.name === selectedTeam)
+                      ? selectedTeam
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) setSelectedTeam(e.target.value);
+                  }}
+                  className="bg-black border border-white/20 text-white rounded-lg px-4 py-2 focus:border-neon-green outline-none min-w-[200px]"
+                >
+                  <option value="" disabled>
+                    Select West Team
+                  </option>
+                  {WESTERN_CONFERENCE.map((team) => (
+                    <option key={team.id} value={team.name}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
