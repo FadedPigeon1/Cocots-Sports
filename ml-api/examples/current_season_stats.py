@@ -12,7 +12,7 @@ def get_current_season_stats():
         df_teams = team_stats.get_data_frames()[0]
 
         # Sort by Win Percentage (W_PCT) descending
-        top_teams = df_teams.sort_values(by='W_PCT', ascending=False).head(10)
+        top_teams = df_teams.sort_values(by='W_PCT', ascending=False)
 
         # Display relevant columns
         print(top_teams[['TEAM_NAME', 'W', 'L', 'W_PCT',
