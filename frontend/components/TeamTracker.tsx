@@ -91,6 +91,16 @@ const MOCK_HISTORICAL_DATA = [
   { game: 21, wins: 2, losses: 19, year: "2024" },
 ];
 
+// Mock data for comparison team (e.g., OKC Thunder)
+const MOCK_COMPARISON_DATA = [
+  { game: 1, wins: 1, losses: 0, year: "2025" },
+  { game: 5, wins: 5, losses: 0, year: "2025" },
+  { game: 10, wins: 9, losses: 1, year: "2025" },
+  { game: 15, wins: 14, losses: 1, year: "2025" },
+  { game: 20, wins: 19, losses: 1, year: "2025" },
+  { game: 21, wins: 20, losses: 1, year: "2025" },
+];
+
 // Mock data for recent games (Bar Chart)
 const RECENT_GAMES = [
   { opponent: "BOS", teamScore: 112, oppScore: 108, result: "W" },
@@ -113,11 +123,15 @@ const TEAM_STATS = [
 export default function TeamTracker() {
   const [showComparison, setShowComparison] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("Detroit Pistons");
+  const [comparisonTeam, setComparisonTeam] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const data = MOCK_DATA.map((item, index) => ({
     ...item,
     wins2024: showComparison ? MOCK_HISTORICAL_DATA[index]?.wins : undefined,
+    winsComparison: comparisonTeam
+      ? MOCK_COMPARISON_DATA[index]?.wins
+      : undefined,
   }));
 
   return (
@@ -154,72 +168,133 @@ export default function TeamTracker() {
         </div>
 
         {isEditing && (
-          <div className="mt-6 p-4 bg-black/40 rounded-lg border border-white/10 animate-fade-in">
-            <h3 className="text-white font-semibold mb-3">
-              Dashboard Controls
-            </h3>
-            <div className="flex gap-4 flex-wrap items-end">
-              <button
-                onClick={() => setShowComparison(!showComparison)}
-                className={`px-4 py-2 rounded-lg border transition-colors h-[42px] ${
-                  showComparison
-                    ? "bg-neon-green text-black border-neon-green"
-                    : "bg-transparent text-white border-white/20 hover:border-neon-green"
-                }`}
-              >
-                {showComparison ? "Hide 2024 Comparison" : "Compare with 2024"}
-              </button>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400 ml-1">
-                  Eastern Conference
-                </label>
-                <select
-                  value={
-                    EASTERN_CONFERENCE.some((t) => t.name === selectedTeam)
-                      ? selectedTeam
-                      : ""
-                  }
-                  onChange={(e) => {
-                    if (e.target.value) setSelectedTeam(e.target.value);
-                  }}
-                  className="bg-black border border-white/20 text-white rounded-lg px-4 py-2 focus:border-neon-green outline-none min-w-[200px]"
-                >
-                  <option value="" disabled>
-                    Select East Team
-                  </option>
-                  {EASTERN_CONFERENCE.map((team) => (
-                    <option key={team.id} value={team.name}>
-                      {team.name}
-                    </option>
-                  ))}
-                </select>
+          <div className="mt-6 p-6 bg-black/40 rounded-lg border border-white/10 animate-fade-in backdrop-blur-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Primary Team Selection */}
+              <div className="space-y-3">
+                <h3 className="text-neon-green font-semibold text-sm uppercase tracking-wider">
+                  Primary Team
+                </h3>
+                <div className="relative">
+                  <select
+                    value={selectedTeam}
+                    onChange={(e) => setSelectedTeam(e.target.value)}
+                    className="w-full bg-black/50 border border-white/20 text-white rounded-lg px-4 py-3 focus:border-neon-green outline-none transition-colors appearance-none cursor-pointer hover:border-white/40"
+                  >
+                    <optgroup label="Eastern Conference">
+                      {EASTERN_CONFERENCE.map((team) => (
+                        <option key={team.id} value={team.name}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Western Conference">
+                      {WESTERN_CONFERENCE.map((team) => (
+                        <option key={team.id} value={team.name}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Select the main team to analyze for the 2025-26 season.
+                </p>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400 ml-1">
-                  Western Conference
-                </label>
-                <select
-                  value={
-                    WESTERN_CONFERENCE.some((t) => t.name === selectedTeam)
-                      ? selectedTeam
-                      : ""
-                  }
-                  onChange={(e) => {
-                    if (e.target.value) setSelectedTeam(e.target.value);
-                  }}
-                  className="bg-black border border-white/20 text-white rounded-lg px-4 py-2 focus:border-neon-green outline-none min-w-[200px]"
-                >
-                  <option value="" disabled>
-                    Select West Team
-                  </option>
-                  {WESTERN_CONFERENCE.map((team) => (
-                    <option key={team.id} value={team.name}>
-                      {team.name}
-                    </option>
-                  ))}
-                </select>
+              {/* Comparison Options */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-blue-400 font-semibold text-sm uppercase tracking-wider">
+                    Comparison
+                  </h3>
+                  {comparisonTeam && (
+                    <button
+                      onClick={() => setComparisonTeam(null)}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
+                    >
+                      <X size={12} /> Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <div className="relative">
+                    <select
+                      value={comparisonTeam || ""}
+                      onChange={(e) =>
+                        setComparisonTeam(e.target.value || null)
+                      }
+                      className="w-full bg-black/50 border border-white/20 text-white rounded-lg px-4 py-3 focus:border-blue-500 outline-none transition-colors appearance-none cursor-pointer hover:border-white/40"
+                    >
+                      <option value="">Select Team to Compare...</option>
+                      <optgroup label="Eastern Conference">
+                        {EASTERN_CONFERENCE.filter(
+                          (t) => t.name !== selectedTeam
+                        ).map((team) => (
+                          <option key={team.id} value={team.name}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Western Conference">
+                        {WESTERN_CONFERENCE.filter(
+                          (t) => t.name !== selectedTeam
+                        ).map((team) => (
+                          <option key={team.id} value={team.name}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowComparison(!showComparison)}
+                    className={`w-full px-4 py-2 rounded-lg border transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                      showComparison
+                        ? "bg-white/10 text-white border-white/30"
+                        : "bg-transparent text-gray-400 border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    {showComparison ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-neon-green"></span>
+                        Hide Historical (2024)
+                      </>
+                    ) : (
+                      "Show Historical (2024)"
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -306,12 +381,23 @@ export default function TeamTracker() {
                 <Line
                   type="monotone"
                   dataKey="wins"
-                  name="2025 Wins"
+                  name={`${selectedTeam} (2025)`}
                   stroke="#39FF14"
                   strokeWidth={3}
                   dot={{ fill: "#39FF14", strokeWidth: 2 }}
                   activeDot={{ r: 6 }}
                 />
+                {comparisonTeam && (
+                  <Line
+                    type="monotone"
+                    dataKey="winsComparison"
+                    name={`${comparisonTeam} (2025)`}
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    dot={{ fill: "#3b82f6", strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
+                )}
                 {showComparison && (
                   <Line
                     type="monotone"
