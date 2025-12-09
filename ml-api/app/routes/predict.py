@@ -14,18 +14,21 @@ model_loader = ModelLoader()
 @router.post("/predict/game", response_model=GamePredictionResponse)
 async def predict_game(request: GamePredictionRequest):
     """
-    Predict the outcome of an NBA game
+    Predict the outcome of an NBA game using current season data and year-ago comparison
 
     Args:
-        request: Game prediction request containing team IDs and date
+        request: Game prediction request containing team IDs
 
     Returns:
         GamePredictionResponse with win probability and predicted score
     """
     try:
-        # Fetch historical game data for both teams
-        home_data = await fetch_game_data(request.home_team_id, request.game_date)
-        away_data = await fetch_game_data(request.away_team_id, request.game_date)
+        # Use current date if not provided
+        game_date = request.game_date or datetime.utcnow()
+
+        # Fetch historical game data for both teams (current season + year ago)
+        home_data = await fetch_game_data(request.home_team_id, game_date)
+        away_data = await fetch_game_data(request.away_team_id, game_date)
 
         # Prepare features for the model
         features = prepare_game_features(home_data, away_data)

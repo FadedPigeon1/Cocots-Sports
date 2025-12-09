@@ -120,11 +120,60 @@ const TEAM_STATS = [
   { subject: "Shooting", A: 85, fullMark: 100 },
 ];
 
+// Team specific details
+const TEAM_DETAILS: Record<
+  string,
+  {
+    record: string;
+    conferenceRank: string;
+    streak: string;
+    lastLoss: string;
+    offRating: string;
+    offRatingRank: string;
+    netRating: string;
+    netRatingRank: string;
+  }
+> = {
+  "Detroit Pistons": {
+    record: "17-4",
+    conferenceRank: "1st in East",
+    streak: "W5",
+    lastLoss: "vs NYK",
+    offRating: "118.5",
+    offRatingRank: "Top 5 in League",
+    netRating: "+8.2",
+    netRatingRank: "Elite Tier",
+  },
+  "Oklahoma City Thunder": {
+    record: "22-1",
+    conferenceRank: "1st in West",
+    streak: "W15",
+    lastLoss: "vs DEN",
+    offRating: "120.1",
+    offRatingRank: "1st in League",
+    netRating: "+12.5",
+    netRatingRank: "Historic Pace",
+  },
+};
+
+const DEFAULT_STATS = {
+  record: "10-10",
+  conferenceRank: "8th in Conf",
+  streak: "L1",
+  lastLoss: "vs BOS",
+  offRating: "112.0",
+  offRatingRank: "League Average",
+  netRating: "+0.5",
+  netRatingRank: "Mid Tier",
+};
+
 export default function TeamTracker() {
   const [showComparison, setShowComparison] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("Detroit Pistons");
   const [comparisonTeam, setComparisonTeam] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const currentStats = TEAM_DETAILS[selectedTeam] || DEFAULT_STATS;
 
   const data = MOCK_DATA.map((item, index) => ({
     ...item,
@@ -308,8 +357,10 @@ export default function TeamTracker() {
             <p className="text-gray-400 text-sm">Season Record</p>
             <Trophy className="text-neon-green h-5 w-5" />
           </div>
-          <p className="text-3xl font-bold text-white">17-4</p>
-          <p className="text-neon-green text-xs mt-1">1st in East</p>
+          <p className="text-3xl font-bold text-white">{currentStats.record}</p>
+          <p className="text-neon-green text-xs mt-1">
+            {currentStats.conferenceRank}
+          </p>
         </div>
 
         <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
@@ -317,8 +368,10 @@ export default function TeamTracker() {
             <p className="text-gray-400 text-sm">Win Streak</p>
             <TrendingUp className="text-blue-500 h-5 w-5" />
           </div>
-          <p className="text-3xl font-bold text-white">W5</p>
-          <p className="text-gray-500 text-xs mt-1">Last Loss: vs NYK</p>
+          <p className="text-3xl font-bold text-white">{currentStats.streak}</p>
+          <p className="text-gray-500 text-xs mt-1">
+            Last Loss: {currentStats.lastLoss}
+          </p>
         </div>
 
         <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
@@ -326,8 +379,12 @@ export default function TeamTracker() {
             <p className="text-gray-400 text-sm">Offensive Rating</p>
             <Target className="text-orange-500 h-5 w-5" />
           </div>
-          <p className="text-3xl font-bold text-white">118.5</p>
-          <p className="text-neon-green text-xs mt-1">Top 5 in League</p>
+          <p className="text-3xl font-bold text-white">
+            {currentStats.offRating}
+          </p>
+          <p className="text-neon-green text-xs mt-1">
+            {currentStats.offRatingRank}
+          </p>
         </div>
 
         <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
@@ -335,8 +392,12 @@ export default function TeamTracker() {
             <p className="text-gray-400 text-sm">Net Rating</p>
             <Activity className="text-purple-500 h-5 w-5" />
           </div>
-          <p className="text-3xl font-bold text-white">+8.2</p>
-          <p className="text-neon-green text-xs mt-1">Elite Tier</p>
+          <p className="text-3xl font-bold text-white">
+            {currentStats.netRating}
+          </p>
+          <p className="text-neon-green text-xs mt-1">
+            {currentStats.netRatingRank}
+          </p>
         </div>
       </div>
 
