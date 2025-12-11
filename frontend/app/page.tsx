@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -6,8 +8,27 @@ import {
   TrendingUp,
   Calendar,
   Trophy,
+  RefreshCw,
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+import { useEffect, useState } from "react";
+
+interface TeamStanding {
+  rank: number;
+  team: string;
+  team_id: string;
+  record: string;
+  wins: number;
+  losses: number;
+  win_pct: number;
+  logo: string;
+}
+
+interface StandingsData {
+  eastern: TeamStanding[];
+  western: TeamStanding[];
+  season: string;
+}
 
 // Mock Data for Standings (2025-26 Season)
 const WEST_STANDINGS = [
@@ -113,6 +134,56 @@ const EAST_STANDINGS = [
 ];
 
 export default function Home() {
+  const [standings, setStandings] = useState<StandingsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchStandings = async (isManualRefresh = false) => {
+    try {
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const response = await fetch("http://localhost:8000/api/v1/standings");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch standings");
+      }
+
+      const data = await response.json();
+      setStandings(data);
+      setLastUpdated(new Date());
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching standings:", err);
+      setError("Failed to load live standings. Showing cached data.");
+      // Keep existing standings or use fallback
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchStandings();
+
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(() => {
+      fetchStandings();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Use live standings or fallback to mock data
+  const westStandings = standings?.western.slice(0, 8) || WEST_STANDINGS;
+  const eastStandings = standings?.eastern.slice(0, 8) || EAST_STANDINGS;
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
@@ -162,6 +233,38 @@ export default function Home() {
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
             Live tracking of conference leaders and playoff pictures.
           </p>
+
+          {/* Status Bar */}
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Loading live standings...</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+                  <span>Live Data</span>
+                </div>
+                {lastUpdated && (
+                  <span>Updated: {lastUpdated.toLocaleTimeString()}</span>
+                )}
+                <button
+                  onClick={() => fetchStandings(true)}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-1 hover:text-neon-green transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </button>
+              </>
+            )}
+          </div>
+
+          {error && <div className="mt-4 text-yellow-500 text-sm">{error}</div>}
         </div>
 
         {/* Standings Grid */}
@@ -176,7 +279,7 @@ export default function Home() {
             </div>
             <div className="p-4">
               <div className="space-y-2">
-                {WEST_STANDINGS.map((team) => (
+                {westStandings.map((team) => (
                   <div
                     key={team.team}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group"
@@ -220,7 +323,7 @@ export default function Home() {
             </div>
             <div className="p-4">
               <div className="space-y-2">
-                {EAST_STANDINGS.map((team) => (
+                {eastStandings.map((team) => (
                   <div
                     key={team.team}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group"

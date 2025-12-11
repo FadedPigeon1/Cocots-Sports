@@ -1,8 +1,67 @@
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
-from nba_api.stats.endpoints import TeamGameLog, PlayerGameLog, CommonTeamRoster, leaguedashteamstats, leaguedashplayerstats
+from nba_api.stats.endpoints import TeamGameLog, PlayerGameLog, CommonTeamRoster, leaguedashteamstats, leaguedashplayerstats, scoreboardv2
 from nba_api.stats.static import teams, players
 import pandas as pd
+
+
+async def get_recent_games(days_back: int = 3) -> List[Dict[str, Any]]:
+    """
+    Fetch recent NBA games from the last N days
+
+    Args:
+        days_back: Number of days to look back for games
+
+    Returns:
+        List of game results with scores and team information
+    """
+    games_list = []
+
+    try:
+        # Get games from the last few days
+        for i in range(days_back):
+            game_date = datetime.now() - timedelta(days=i)
+            date_str = game_date.strftime('%m/%d/%Y')
+
+            try:
+                scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
+                games_df = scoreboard.get_data_frames()[0]
+                line_score_df = scoreboard.get_data_frames()[1]
+
+                if not games_df.empty:
+                    # Process each game
+                    for _, game in games_df.iterrows():
+                        game_id = game['GAME_ID']
+
+                        # Get team scores from line_score
+                        game_scores = line_score_df[line_score_df['GAME_ID'] == game_id]
+
+                        if len(game_scores) == 2:
+                            home_team = game_scores.iloc[1]
+                            away_team = game_scores.iloc[0]
+
+                            games_list.append({
+                                'date': game_date.strftime('%b %d, %Y'),
+                                'home_team': {
+                                    'name': home_team['TEAM_NAME'],
+                                    'id': str(home_team['TEAM_ID']),
+                                    'score': int(home_team['PTS'])
+                                },
+                                'away_team': {
+                                    'name': away_team['TEAM_NAME'],
+                                    'id': str(away_team['TEAM_ID']),
+                                    'score': int(away_team['PTS'])
+                                },
+                                'status': 'Final'
+                            })
+            except Exception as e:
+                print(f"Error fetching games for {date_str}: {e}")
+                continue
+
+        return games_list
+    except Exception as e:
+        print(f"Error in get_recent_games: {e}")
+        return []
 
 
 async def get_current_standings(season: str = "2025-26") -> List[Dict[str, Any]]:

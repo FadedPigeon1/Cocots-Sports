@@ -9,52 +9,58 @@ export default function PlayersPage() {
 
   const players = [
     {
-      name: "Luka Dončić",
-      team: "LAL",
-      ppg: 35.3,
-      rpg: 8.9,
-      apg: 8.9,
-      position: "G",
-    },
-    {
       name: "Shai Gilgeous-Alexander",
       team: "OKC",
-      ppg: 32.8,
-      rpg: 4.7,
-      apg: 6.5,
+      ppg: 34.2,
+      rpg: 5.5,
+      apg: 7.8,
       position: "G",
+      trend: "+1.4",
     },
     {
-      name: "Tyrese Maxey",
-      team: "PHI",
-      ppg: 32.5,
-      rpg: 4.8,
-      apg: 7.5,
-      position: "G",
+      name: "Victor Wembanyama",
+      team: "SAS",
+      ppg: 28.9,
+      rpg: 13.4,
+      apg: 4.2,
+      position: "C",
+      trend: "+3.2",
     },
     {
-      name: "Giannis Antetokounmpo",
-      team: "MIL",
-      ppg: 30.6,
-      rpg: 10.7,
-      apg: 6.4,
-      position: "F",
+      name: "Cade Cunningham",
+      team: "DET",
+      ppg: 27.5,
+      rpg: 6.2,
+      apg: 9.4,
+      position: "G",
+      trend: "+2.1",
     },
     {
-      name: "Donovan Mitchell",
-      team: "CLE",
-      ppg: 30.6,
-      rpg: 5.0,
-      apg: 5.5,
+      name: "Luka Dončić",
+      team: "DAL",
+      ppg: 33.8,
+      rpg: 9.1,
+      apg: 9.5,
       position: "G",
+      trend: "-0.5",
+    },
+    {
+      name: "Anthony Edwards",
+      team: "MIN",
+      ppg: 31.2,
+      rpg: 5.8,
+      apg: 5.2,
+      position: "G",
+      trend: "+1.8",
     },
     {
       name: "Nikola Jokić",
       team: "DEN",
-      ppg: 29.6,
-      rpg: 12.7,
-      apg: 10.2,
+      ppg: 26.4,
+      rpg: 12.1,
+      apg: 11.5,
       position: "C",
+      trend: "0.0",
     },
   ];
 
@@ -175,10 +181,21 @@ export default function PlayersPage() {
                       {player.apg}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-neon-green hover:text-green-400 flex items-center gap-1 ml-auto transition-colors">
-                        <TrendingUp className="h-4 w-4" />
-                        <span className="text-sm">Predict</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-4">
+                        <span
+                          className={`text-xs font-medium ${
+                            parseFloat(player.trend) > 0
+                              ? "text-neon-green"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {player.trend} Last 5
+                        </span>
+                        <button className="text-neon-green hover:text-green-400 flex items-center gap-1 transition-colors">
+                          <TrendingUp className="h-4 w-4" />
+                          <span className="text-sm">Predict</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

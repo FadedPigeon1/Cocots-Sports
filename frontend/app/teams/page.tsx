@@ -1,59 +1,61 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Trophy, TrendingUp, Users } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Calendar, Clock, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
-export default function TeamsPage() {
-  const teams = [
-    {
-      name: "Oklahoma City Thunder",
-      abbr: "OKC",
-      wins: 21,
-      losses: 1,
-      winPct: 0.955,
-      conference: "West",
-    },
-    {
-      name: "Detroit Pistons",
-      abbr: "DET",
-      wins: 17,
-      losses: 4,
-      winPct: 0.81,
-      conference: "East",
-    },
-    {
-      name: "Los Angeles Lakers",
-      abbr: "LAL",
-      wins: 15,
-      losses: 5,
-      winPct: 0.75,
-      conference: "West",
-    },
-    {
-      name: "Houston Rockets",
-      abbr: "HOU",
-      wins: 13,
-      losses: 5,
-      winPct: 0.722,
-      conference: "West",
-    },
-    {
-      name: "San Antonio Spurs",
-      abbr: "SAS",
-      wins: 14,
-      losses: 6,
-      winPct: 0.7,
-      conference: "West",
-    },
-    {
-      name: "Denver Nuggets",
-      abbr: "DEN",
-      wins: 14,
-      losses: 6,
-      winPct: 0.7,
-      conference: "West",
-    },
-  ];
+interface Team {
+  name: string;
+  id: string;
+  score: number;
+}
+
+interface Game {
+  date: string;
+  home_team: Team;
+  away_team: Team;
+  status: string;
+}
+
+export default function RecentGamesPage() {
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchRecentGames();
+  }, []);
+
+  const fetchRecentGames = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        "http://localhost:8000/api/v1/games/recent?days_back=3"
+      );
+      const data = await response.json();
+      setGames(data.games || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching games:", err);
+      setError("Failed to load recent games. Showing mock data.");
+      // Fallback to mock data
+      setGames([
+        {
+          date: "Dec 8, 2025",
+          home_team: { name: "Detroit Pistons", id: "1610612765", score: 105 },
+          away_team: { name: "Indiana Pacers", id: "1610612754", score: 96 },
+          status: "Final",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTeamLogo = (teamId: string) => {
+    return `https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`;
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -76,7 +78,7 @@ export default function TeamsPage() {
                 Predictions
               </Link>
               <Link href="/teams" className="text-neon-green font-semibold">
-                Teams
+                Recent Games
               </Link>
               <Link
                 href="/players"
@@ -92,74 +94,94 @@ export default function TeamsPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">NBA Teams</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Recent Games</h1>
           <p className="text-gray-400 text-lg">
-            Browse team statistics, standings, and performance metrics.
+            Latest scores and results from around the league.
           </p>
+          {error && <p className="text-yellow-500 text-sm mt-2">{error}</p>}
         </div>
 
-        {/* Conference Tabs */}
-        <div className="flex gap-4 mb-8">
-          <button className="bg-neon-green text-black px-6 py-2 rounded-lg font-bold hover:bg-green-400 transition-colors">
-            All Teams
-          </button>
-          <button className="bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors border border-white/10">
-            Eastern Conference
-          </button>
-          <button className="bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors border border-white/10">
-            Western Conference
-          </button>
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-12 w-12 text-neon-green animate-spin" />
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {games.map((game, index) => (
+              <div
+                key={index}
+                className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span>{game.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-neon-green text-sm font-semibold">
+                    <Clock className="h-4 w-4" />
+                    <span>{game.status}</span>
+                  </div>
+                </div>
 
-        {/* Teams Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teams.map((team) => (
-            <div
-              key={team.abbr}
-              className="bg-gray-900/50 backdrop-blur-sm border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all cursor-pointer group"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1 group-hover:text-neon-green transition-colors">
-                    {team.name}
-                  </h3>
-                  <p className="text-gray-400">
-                    {team.abbr} • {team.conference}
-                  </p>
-                </div>
-                <Trophy className="h-6 w-6 text-neon-green" />
-              </div>
+                <div className="flex items-center justify-between">
+                  {/* Home Team */}
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="relative w-12 h-12">
+                      <Image
+                        src={getTeamLogo(game.home_team.id)}
+                        alt={game.home_team.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg text-white">
+                        {game.home_team.name}
+                      </p>
+                      <p
+                        className={`text-2xl font-bold ${
+                          game.home_team.score > game.away_team.score
+                            ? "text-neon-green"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {game.home_team.score}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">Wins</p>
-                  <p className="text-2xl font-bold text-white">{team.wins}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">Losses</p>
-                  <p className="text-2xl font-bold text-white">{team.losses}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">Win %</p>
-                  <p className="text-2xl font-bold text-neon-green">
-                    {(team.winPct * 100).toFixed(0)}%
-                  </p>
-                </div>
-              </div>
+                  <div className="px-8 text-gray-600 font-bold">VS</div>
 
-              <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
-                <span className="text-gray-400 text-sm flex items-center gap-2 group-hover:text-white transition-colors">
-                  <TrendingUp className="h-4 w-4" />
-                  View Stats
-                </span>
-                <span className="text-gray-400 text-sm flex items-center gap-2 group-hover:text-white transition-colors">
-                  <Users className="h-4 w-4" />
-                  Roster
-                </span>
+                  {/* Away Team */}
+                  <div className="flex items-center gap-4 flex-1 justify-end text-right">
+                    <div>
+                      <p className="font-bold text-lg text-white">
+                        {game.away_team.name}
+                      </p>
+                      <p
+                        className={`text-2xl font-bold ${
+                          game.away_team.score > game.home_team.score
+                            ? "text-neon-green"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {game.away_team.score}
+                      </p>
+                    </div>
+                    <div className="relative w-12 h-12">
+                      <Image
+                        src={getTeamLogo(game.away_team.id)}
+                        alt={game.away_team.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

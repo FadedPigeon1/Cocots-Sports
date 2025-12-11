@@ -3,7 +3,7 @@ from datetime import datetime
 
 from app.schemas.predict_request import GamePredictionRequest, PlayerStatsRequest
 from app.schemas.predict_response import GamePredictionResponse, PlayerStatsResponse
-from app.services.data_fetcher import fetch_game_data, fetch_player_stats, get_all_nba_teams, find_player_by_name
+from app.services.data_fetcher import fetch_game_data, fetch_player_stats, get_all_nba_teams, find_player_by_name, get_recent_games
 from app.services.feature_engineering import prepare_game_features, prepare_player_features
 from app.services.model_loder import ModelLoader
 
@@ -117,4 +117,73 @@ async def search_players(player_name: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to search players: {str(e)}"
+        ) from e
+
+
+@router.get("/games/recent")
+async def get_recent_nba_games(days_back: int = 3):
+    """Get recent NBA game results from the last N days"""
+    try:
+        games = await get_recent_games(days_back)
+        return {"games": games, "count": len(games)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch recent games: {str(e)}"
+        ) from e
+
+
+@router.get("/standings")
+async def get_standings(season: str = "2025-26"):
+    """Get current NBA standings by conference"""
+    try:
+        from app.services.data_fetcher import get_current_standings
+
+        standings_data = await get_current_standings(season)
+
+        # Separate by conference
+        east_teams = []
+        west_teams = []
+
+        for team in standings_data:
+            team_info = {
+                "team": team.get("TEAM_NAME", ""),
+                "team_id": str(team.get("TEAM_ID", "")),
+                "wins": team.get("W", 0),
+                "losses": team.get("L", 0),
+                "win_pct": round(team.get("W_PCT", 0), 3),
+                "record": f"{team.get('W', 0)}-{team.get('L', 0)}",
+                "logo": f"https://cdn.nba.com/logos/nba/{team.get('TEAM_ID', '')}/global/L/logo.svg"
+            }
+
+            # Determine conference (simple logic based on team name/ID)
+            # Eastern Conference team IDs
+            east_ids = [1610612737, 1610612738, 1610612751, 1610612766, 1610612741,
+                        1610612739, 1610612765, 1610612754, 1610612748, 1610612749,
+                        1610612752, 1610612753, 1610612755, 1610612761, 1610612764]
+
+            if team.get("TEAM_ID") in east_ids:
+                east_teams.append(team_info)
+            else:
+                west_teams.append(team_info)
+
+        # Sort by win percentage
+        east_teams.sort(key=lambda x: x["win_pct"], reverse=True)
+        west_teams.sort(key=lambda x: x["win_pct"], reverse=True)
+
+        # Add rank
+        for i, team in enumerate(east_teams):
+            team["rank"] = i + 1
+        for i, team in enumerate(west_teams):
+            team["rank"] = i + 1
+
+        return {
+            "eastern": east_teams,
+            "western": west_teams,
+            "season": season
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch standings: {str(e)}"
         ) from e
