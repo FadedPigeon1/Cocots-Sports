@@ -13,6 +13,8 @@ import {
   Calendar,
   MapPin,
   RefreshCw,
+  Star,
+  Check,
 } from "lucide-react";
 import {
   LineChart,
@@ -30,6 +32,7 @@ import {
   Radar,
 } from "recharts";
 import { getTeam } from "@/lib/api/client";
+import { useTracking } from "@/lib/hooks/useTracking";
 
 interface TeamDetails {
   team_id: string;
@@ -76,6 +79,14 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const {
+    user,
+    isTeamTracked,
+    trackTeam,
+    untrackTeam,
+    loading: trackingLoading,
+  } = useTracking();
+  const [trackingInProgress, setTrackingInProgress] = useState(false);
 
   useEffect(() => {
     if (teamId) {
@@ -109,6 +120,31 @@ export default function TeamPage() {
   const handleManualRefresh = () => {
     fetchTeamData(true);
   };
+
+  const handleTrackToggle = async () => {
+    if (!teamDetails || trackingInProgress) return;
+
+    setTrackingInProgress(true);
+    try {
+      const numericTeamId = parseInt(teamId);
+      if (isTeamTracked(numericTeamId)) {
+        await untrackTeam(numericTeamId);
+      } else {
+        // Extract abbreviation from team name (simplified)
+        const abbr =
+          teamDetails.team_name
+            .split(" ")
+            .pop()
+            ?.substring(0, 3)
+            .toUpperCase() || "NBA";
+        await trackTeam(numericTeamId, teamDetails.team_name, abbr);
+      }
+    } finally {
+      setTrackingInProgress(false);
+    }
+  };
+
+  const isTracked = teamDetails ? isTeamTracked(parseInt(teamId)) : false;
 
   if (loading) {
     return (
@@ -207,9 +243,31 @@ export default function TeamPage() {
 
             <div className="flex-1 space-y-4">
               <div>
-                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2">
-                  {teamDetails.team_name}
-                </h1>
+                <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
+                  <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
+                    {teamDetails.team_name}
+                  </h1>
+                  {user && (
+                    <button
+                      onClick={handleTrackToggle}
+                      disabled={trackingInProgress || trackingLoading}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        isTracked
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
+                      } disabled:opacity-50`}
+                    >
+                      {trackingInProgress ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : isTracked ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Star className="h-4 w-4" />
+                      )}
+                      {isTracked ? "Tracking" : "Track"}
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />

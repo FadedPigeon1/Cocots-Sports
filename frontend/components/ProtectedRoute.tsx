@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUser } from "@/lib/supabase/auth";
+import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 export default function ProtectedRoute({
@@ -15,18 +15,36 @@ export default function ProtectedRoute({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const currentUser = await getUser();
+    const supabase = createClient();
 
-      if (!currentUser) {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
         router.push("/login");
       } else {
-        setUser(currentUser);
+        setUser(user);
       }
 
       setLoading(false);
     };
     checkAuth();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        router.push("/login");
+      } else if (session?.user) {
+        setUser(session.user);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   if (loading) {

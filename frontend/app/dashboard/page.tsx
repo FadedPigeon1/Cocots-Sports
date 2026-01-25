@@ -12,17 +12,20 @@ import {
   GitCompare,
   User,
   History,
+  Star,
 } from "lucide-react";
 import PlayerComparison from "@/components/PlayerComparison";
 import TeamComparison from "@/components/TeamComparison";
+import TrackedTeamsChart from "@/components/TrackedTeamsChart";
+import { useTracking } from "@/lib/hooks/useTracking";
 
 type DashboardView = "overview" | "player-compare" | "team-compare";
 
 export default function Dashboard() {
+  const { trackedTeams, trackedPlayers } = useTracking();
   const [stats] = useState({
     activePredictions: 12,
     successRate: 78,
-    trackedTeams: 5,
     recentWins: 8,
   });
   const [activeView, setActiveView] = useState<DashboardView>("overview");
@@ -123,14 +126,14 @@ export default function Dashboard() {
             <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <Users className="h-6 w-6" />
+                  <Star className="h-6 w-6" />
                 </div>
-                <span className="flex items-center text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-                  0% --
+                <span className="flex items-center text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  {trackedTeams.length > 0 ? "Active" : "None"}
                 </span>
               </div>
               <h3 className="text-2xl font-bold text-foreground">
-                {stats.trackedTeams}
+                {trackedTeams.length}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Tracked Teams
@@ -140,18 +143,23 @@ export default function Dashboard() {
             <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <Trophy className="h-6 w-6" />
+                  <User className="h-6 w-6" />
                 </div>
-                <span className="flex items-center text-xs font-medium text-red-500 bg-red-500/10 px-2 py-1 rounded-full">
-                  -2% <TrendingDown className="h-3 w-3 ml-1" />
+                <span className="flex items-center text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  {trackedPlayers.length > 0 ? "Active" : "None"}
                 </span>
               </div>
               <h3 className="text-2xl font-bold text-foreground">
-                {stats.recentWins}
+                {trackedPlayers.length}
               </h3>
-              <p className="text-sm text-muted-foreground mt-1">Recent Wins</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Tracked Players
+              </p>
             </div>
           </div>
+
+          {/* Tracked Teams Chart */}
+          <TrackedTeamsChart />
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

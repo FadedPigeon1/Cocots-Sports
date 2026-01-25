@@ -19,17 +19,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      const { data, error: signInError } = await signIn(email, password);
 
       if (signInError) {
         setError(signInError.message);
-      } else {
+        setLoading(false);
+      } else if (data.session) {
+        // Small delay to ensure cookies are set before navigation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         router.push("/dashboard");
         router.refresh();
       }
     } catch (err) {
       setError("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };

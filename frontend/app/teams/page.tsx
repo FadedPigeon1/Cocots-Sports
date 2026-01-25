@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Search, Trophy, TrendingUp, Star, ChevronRight } from "lucide-react";
 import { getStandings } from "@/lib/api/client";
 import Link from "next/link";
+import { useTracking } from "@/lib/hooks/useTracking";
 
 type Conference = "all" | "East" | "West";
 
@@ -13,6 +14,7 @@ export default function Teams() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { isTeamTracked, trackTeam, untrackTeam, user } = useTracking();
   const [conferenceFilter, setConferenceFilter] = useState<Conference>("all");
 
   useEffect(() => {
@@ -239,19 +241,66 @@ export default function Teams() {
                       </span>
                     </div>
                   </div>
-                  <div
-                    className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg border bg-card shadow-sm ${
-                      team.CONFERENCE === "East"
-                        ? "border-blue-500/30 text-blue-500"
-                        : "border-red-500/30 text-red-500"
-                    }`}
-                  >
-                    <span className="text-[10px] font-bold uppercase leading-none mb-0.5">
-                      Rank
-                    </span>
-                    <span className="text-sm font-black leading-none">
-                      {team.CONF_RANK || "-"}
-                    </span>
+
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Ensure we have a valid user before trying to track
+                        if (!user) {
+                          alert("Please sign in to track teams");
+                          return;
+                        }
+
+                        const isTracked = isTeamTracked(team.TEAM_ID);
+                        if (isTracked) {
+                          untrackTeam(team.TEAM_ID);
+                        } else {
+                          // Generate simple abbr - take first 3 chars or first letter of each word
+                          const words = team.TEAM_NAME.split(" ");
+                          const abbr =
+                            words.length > 1
+                              ? words
+                                  .map((w: string) => w[0])
+                                  .join("")
+                                  .substring(0, 3)
+                                  .toUpperCase()
+                              : team.TEAM_NAME.substring(0, 3).toUpperCase();
+
+                          trackTeam(team.TEAM_ID, team.TEAM_NAME, abbr);
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-all ${
+                        isTeamTracked(team.TEAM_ID)
+                          ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20"
+                          : "text-muted-foreground hover:text-yellow-500 hover:bg-secondary"
+                      }`}
+                      title={
+                        isTeamTracked(team.TEAM_ID)
+                          ? "Untrack Team"
+                          : "Track Team"
+                      }
+                    >
+                      <Star
+                        className={`h-5 w-5 ${isTeamTracked(team.TEAM_ID) ? "fill-current" : ""}`}
+                      />
+                    </button>
+
+                    <div
+                      className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg border bg-card shadow-sm ${
+                        team.CONFERENCE === "East"
+                          ? "border-blue-500/30 text-blue-500"
+                          : "border-red-500/30 text-red-500"
+                      }`}
+                    >
+                      <span className="text-[10px] font-bold uppercase leading-none mb-0.5">
+                        Rank
+                      </span>
+                      <span className="text-sm font-black leading-none">
+                        {team.CONF_RANK || "-"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

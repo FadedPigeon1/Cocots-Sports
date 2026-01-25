@@ -16,6 +16,9 @@ import {
   Weight,
   Shirt,
   Flag,
+  Star,
+  Check,
+  RefreshCw,
 } from "lucide-react";
 import {
   LineChart,
@@ -28,6 +31,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getPlayer } from "@/lib/api/client";
+import { useTracking } from "@/lib/hooks/useTracking";
 
 interface PlayerDetails {
   info: {
@@ -78,6 +82,14 @@ export default function PlayerPage() {
   const [player, setPlayer] = useState<PlayerDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {
+    user,
+    isPlayerTracked,
+    trackPlayer,
+    untrackPlayer,
+    loading: trackingLoading,
+  } = useTracking();
+  const [trackingInProgress, setTrackingInProgress] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -96,6 +108,28 @@ export default function PlayerPage() {
       fetchData();
     }
   }, [playerId]);
+
+  const handleTrackToggle = async () => {
+    if (!player || trackingInProgress) return;
+
+    setTrackingInProgress(true);
+    try {
+      const numericPlayerId = parseInt(playerId);
+      if (isPlayerTracked(numericPlayerId)) {
+        await untrackPlayer(numericPlayerId);
+      } else {
+        // Get team abbreviation from player info
+        const teamAbbr =
+          player.info.team.split(" ").pop()?.substring(0, 3).toUpperCase() ||
+          "NBA";
+        await trackPlayer(numericPlayerId, player.info.name, teamAbbr);
+      }
+    } finally {
+      setTrackingInProgress(false);
+    }
+  };
+
+  const isTracked = player ? isPlayerTracked(parseInt(playerId)) : false;
 
   if (loading) {
     return (
@@ -170,9 +204,31 @@ export default function PlayerPage() {
 
             <div className="flex-1 space-y-6 pb-8 text-center md:text-left">
               <div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-2">
-                  {player.info.name}
-                </h1>
+                <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
+                  <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground">
+                    {player.info.name}
+                  </h1>
+                  {user && (
+                    <button
+                      onClick={handleTrackToggle}
+                      disabled={trackingInProgress || trackingLoading}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        isTracked
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
+                      } disabled:opacity-50`}
+                    >
+                      {trackingInProgress ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : isTracked ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Star className="h-4 w-4" />
+                      )}
+                      {isTracked ? "Tracking" : "Track"}
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-lg text-muted-foreground">
                   <span className="font-semibold text-primary">
                     #{player.info.jersey}
