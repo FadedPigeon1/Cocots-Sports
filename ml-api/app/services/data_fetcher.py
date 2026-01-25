@@ -663,3 +663,408 @@ async def get_player_details(player_id: int, season: str = "2025-26") -> Dict[st
     except Exception as e:
         print(f"Error fetching player details: {e}")
         return None
+
+
+async def get_player_season_stats(player_id: int) -> List[str]:
+    """
+    Get list of available seasons for a player
+    """
+    try:
+        info = commonplayerinfo.CommonPlayerInfo(player_id=player_id)
+        df_info = info.get_data_frames()[0]
+
+        if df_info.empty:
+            return []
+
+        from_year = int(df_info.iloc[0]['FROM_YEAR'])
+        to_year = int(df_info.iloc[0]['TO_YEAR'])
+
+        seasons = []
+        for year in range(from_year, to_year + 1):
+            seasons.append(f"{year}-{str(year + 1)[-2:]}")
+
+        return seasons
+    except Exception as e:
+        print(f"Error getting player seasons: {e}")
+        return []
+
+
+async def get_team_season_stats(team_id: int) -> List[str]:
+    """
+    Get list of available seasons for a team (last 20 years for NBA teams)
+    """
+    try:
+        current_year = datetime.now().year
+        seasons = []
+        # NBA teams have data going back many years, return last 20
+        for year in range(current_year - 20, current_year + 1):
+            seasons.append(f"{year}-{str(year + 1)[-2:]}")
+        return seasons
+    except Exception as e:
+        print(f"Error getting team seasons: {e}")
+        return []
+
+
+async def compare_players(player_ids: List[int], season: str = "2025-26") -> Dict[str, Any]:
+    """
+    Compare multiple players' statistics for a given season
+    """
+    try:
+        players_data = []
+
+        for player_id in player_ids:
+            try:
+                # Get player info
+                info = commonplayerinfo.CommonPlayerInfo(player_id=player_id)
+                df_info = info.get_data_frames()[0]
+
+                if df_info.empty:
+                    continue
+
+                player_info = df_info.iloc[0]
+
+                # Get player game logs for the season
+                gamelog = PlayerGameLog(player_id=player_id, season=season)
+                df_logs = gamelog.get_data_frames()[0]
+
+                if df_logs.empty:
+                    continue
+
+                # Calculate averages
+                stats = {
+                    'player_id': player_id,
+                    'name': player_info['DISPLAY_FIRST_LAST'],
+                    'team': player_info['TEAM_NAME'],
+                    'team_id': int(player_info['TEAM_ID']),
+                    'position': player_info['POSITION'],
+                    'season': season,
+                    'games_played': len(df_logs),
+                    'ppg': round(float(df_logs['PTS'].mean()), 1),
+                    'rpg': round(float(df_logs['REB'].mean()), 1),
+                    'apg': round(float(df_logs['AST'].mean()), 1),
+                    'spg': round(float(df_logs['STL'].mean()), 1),
+                    'bpg': round(float(df_logs['BLK'].mean()), 1),
+                    'fg_pct': round(float(df_logs['FG_PCT'].mean()) * 100, 1),
+                    'fg3_pct': round(float(df_logs['FG3_PCT'].mean()) * 100, 1),
+                    'ft_pct': round(float(df_logs['FT_PCT'].mean()) * 100, 1),
+                    'mpg': round(float(df_logs['MIN'].mean()), 1),
+                    'tov': round(float(df_logs['TOV'].mean()), 1),
+                    'fga': round(float(df_logs['FGA'].mean()), 1),
+                    'fta': round(float(df_logs['FTA'].mean()), 1),
+                }
+
+                # Calculate game-by-game data for charts
+                game_data = []
+                for idx, (_, game) in enumerate(df_logs.iloc[::-1].iterrows()):
+                    game_data.append({
+                        'game_num': idx + 1,
+                        'pts': int(game['PTS']),
+                        'reb': int(game['REB']),
+                        'ast': int(game['AST']),
+                        'date': game['GAME_DATE']
+                    })
+
+                stats['game_data'] = game_data
+                players_data.append(stats)
+
+            except Exception as e:
+                print(f"Error fetching player {player_id}: {e}")
+                continue
+
+        # Create comparison stats for radar chart
+        stat_categories = ['ppg', 'rpg', 'apg',
+                           'spg', 'bpg', 'fg_pct', 'fg3_pct']
+        comparison_data = []
+
+        for category in stat_categories:
+            data_point = {'stat': category.upper().replace('_PCT', '%')}
+            for player in players_data:
+                data_point[player['name']] = player.get(category, 0)
+            comparison_data.append(data_point)
+
+        return {
+            'players': players_data,
+            'comparison_data': comparison_data,
+            'season': season
+        }
+    except Exception as e:
+        print(f"Error comparing players: {e}")
+        return {'players': [], 'comparison_data': [], 'season': season}
+
+
+async def compare_teams(team_ids: List[int], season: str = "2025-26") -> Dict[str, Any]:
+    """
+    Compare multiple teams' statistics for a given season
+    """
+    try:
+        # Get league-wide team stats
+        team_stats = leaguedashteamstats.LeagueDashTeamStats(season=season)
+        df_all_teams = team_stats.get_data_frames()[0]
+
+        teams_data = []
+
+        for team_id in team_ids:
+            try:
+                team_row = df_all_teams[df_all_teams['TEAM_ID'] == team_id]
+
+                if team_row.empty:
+                    continue
+
+                team = team_row.iloc[0]
+
+                # Get game log for trend data
+                game_log = TeamGameLog(
+                    team_id=team_id,
+                    season=season,
+                    season_type_all_star="Regular Season"
+                )
+                df_games = game_log.get_data_frames()[0]
+
+                # Calculate stats
+                stats = {
+                    'team_id': team_id,
+                    'name': team['TEAM_NAME'],
+                    'season': season,
+                    'wins': int(team['W']),
+                    'losses': int(team['L']),
+                    'win_pct': round(float(team['W_PCT']) * 100, 1),
+                    'ppg': round(float(team['PTS']), 1),
+                    'opp_ppg': round(float(team.get('OPP_PTS', 0)), 1) if 'OPP_PTS' in team else 0,
+                    'fg_pct': round(float(team['FG_PCT']) * 100, 1),
+                    'fg3_pct': round(float(team['FG3_PCT']) * 100, 1),
+                    'ft_pct': round(float(team['FT_PCT']) * 100, 1),
+                    'reb': round(float(team['REB']), 1),
+                    'ast': round(float(team['AST']), 1),
+                    'stl': round(float(team['STL']), 1),
+                    'blk': round(float(team['BLK']), 1),
+                    'tov': round(float(team['TOV']), 1),
+                    'plus_minus': round(float(team['PLUS_MINUS']), 1),
+                }
+
+                # Calculate game-by-game win trend
+                game_data = []
+                cumulative_wins = 0
+                cumulative_losses = 0
+
+                for idx, (_, game) in enumerate(df_games.iloc[::-1].iterrows()):
+                    if game['WL'] == 'W':
+                        cumulative_wins += 1
+                    else:
+                        cumulative_losses += 1
+
+                    game_data.append({
+                        'game_num': idx + 1,
+                        'wins': cumulative_wins,
+                        'losses': cumulative_losses,
+                        'pts': int(game['PTS']),
+                        'date': game['GAME_DATE']
+                    })
+
+                stats['game_data'] = game_data
+                teams_data.append(stats)
+
+            except Exception as e:
+                print(f"Error fetching team {team_id}: {e}")
+                continue
+
+        # Create comparison data for radar chart
+        stat_categories = ['ppg', 'fg_pct',
+                           'fg3_pct', 'reb', 'ast', 'stl', 'blk']
+        comparison_data = []
+
+        for category in stat_categories:
+            data_point = {'stat': category.upper().replace('_PCT', '%')}
+            for team in teams_data:
+                data_point[team['name']] = team.get(category, 0)
+            comparison_data.append(data_point)
+
+        return {
+            'teams': teams_data,
+            'comparison_data': comparison_data,
+            'season': season
+        }
+    except Exception as e:
+        print(f"Error comparing teams: {e}")
+        return {'teams': [], 'comparison_data': [], 'season': season}
+
+
+async def get_player_historical_comparison(player_id: int, seasons: List[str]) -> Dict[str, Any]:
+    """
+    Get a player's statistics across multiple seasons for self-comparison
+    """
+    try:
+        # Get player info
+        info = commonplayerinfo.CommonPlayerInfo(player_id=player_id)
+        df_info = info.get_data_frames()[0]
+
+        if df_info.empty:
+            return None
+
+        player_info = df_info.iloc[0]
+
+        seasons_data = []
+
+        for season in seasons:
+            try:
+                gamelog = PlayerGameLog(player_id=player_id, season=season)
+                df_logs = gamelog.get_data_frames()[0]
+
+                if df_logs.empty:
+                    continue
+
+                stats = {
+                    'season': season,
+                    'games_played': len(df_logs),
+                    'ppg': round(float(df_logs['PTS'].mean()), 1),
+                    'rpg': round(float(df_logs['REB'].mean()), 1),
+                    'apg': round(float(df_logs['AST'].mean()), 1),
+                    'spg': round(float(df_logs['STL'].mean()), 1),
+                    'bpg': round(float(df_logs['BLK'].mean()), 1),
+                    'fg_pct': round(float(df_logs['FG_PCT'].mean()) * 100, 1),
+                    'fg3_pct': round(float(df_logs['FG3_PCT'].mean()) * 100, 1),
+                    'ft_pct': round(float(df_logs['FT_PCT'].mean()) * 100, 1),
+                    'mpg': round(float(df_logs['MIN'].mean()), 1),
+                }
+
+                # Game by game data for the season
+                game_data = []
+                for idx, (_, game) in enumerate(df_logs.iloc[::-1].iterrows()):
+                    game_data.append({
+                        'game_num': idx + 1,
+                        'pts': int(game['PTS']),
+                        'reb': int(game['REB']),
+                        'ast': int(game['AST']),
+                    })
+
+                stats['game_data'] = game_data
+                seasons_data.append(stats)
+
+            except Exception as e:
+                print(
+                    f"Error fetching season {season} for player {player_id}: {e}")
+                continue
+
+        # Create comparison data for bar/radar chart
+        stat_categories = ['ppg', 'rpg', 'apg',
+                           'spg', 'bpg', 'fg_pct', 'fg3_pct']
+        comparison_data = []
+
+        for category in stat_categories:
+            data_point = {'stat': category.upper().replace('_PCT', '%')}
+            for season_stats in seasons_data:
+                data_point[season_stats['season']
+                           ] = season_stats.get(category, 0)
+            comparison_data.append(data_point)
+
+        return {
+            'player': {
+                'id': player_id,
+                'name': player_info['DISPLAY_FIRST_LAST'],
+                'team': player_info['TEAM_NAME'],
+                'position': player_info['POSITION']
+            },
+            'seasons': seasons_data,
+            'comparison_data': comparison_data
+        }
+    except Exception as e:
+        print(f"Error getting player historical comparison: {e}")
+        return None
+
+
+async def get_team_historical_comparison(team_id: int, seasons: List[str]) -> Dict[str, Any]:
+    """
+    Get a team's statistics across multiple seasons for self-comparison
+    (e.g., 2016 Warriors vs 2022 Warriors)
+    """
+    try:
+        # Get team info
+        team_info = teams.find_team_by_id(team_id)
+        if not team_info:
+            return None
+
+        seasons_data = []
+
+        for season in seasons:
+            try:
+                # Get team stats for the season
+                team_stats = leaguedashteamstats.LeagueDashTeamStats(
+                    season=season)
+                df_teams = team_stats.get_data_frames()[0]
+
+                team_row = df_teams[df_teams['TEAM_ID'] == team_id]
+
+                if team_row.empty:
+                    continue
+
+                team = team_row.iloc[0]
+
+                # Get game log for trend data
+                game_log = TeamGameLog(
+                    team_id=team_id,
+                    season=season,
+                    season_type_all_star="Regular Season"
+                )
+                df_games = game_log.get_data_frames()[0]
+
+                stats = {
+                    'season': season,
+                    'wins': int(team['W']),
+                    'losses': int(team['L']),
+                    'win_pct': round(float(team['W_PCT']) * 100, 1),
+                    'ppg': round(float(team['PTS']), 1),
+                    'fg_pct': round(float(team['FG_PCT']) * 100, 1),
+                    'fg3_pct': round(float(team['FG3_PCT']) * 100, 1),
+                    'ft_pct': round(float(team['FT_PCT']) * 100, 1),
+                    'reb': round(float(team['REB']), 1),
+                    'ast': round(float(team['AST']), 1),
+                    'stl': round(float(team['STL']), 1),
+                    'blk': round(float(team['BLK']), 1),
+                    'tov': round(float(team['TOV']), 1),
+                }
+
+                # Calculate cumulative win trend
+                game_data = []
+                cumulative_wins = 0
+
+                for idx, (_, game) in enumerate(df_games.iloc[::-1].iterrows()):
+                    if game['WL'] == 'W':
+                        cumulative_wins += 1
+
+                    game_data.append({
+                        'game_num': idx + 1,
+                        'wins': cumulative_wins,
+                        'pts': int(game['PTS']),
+                    })
+
+                stats['game_data'] = game_data
+                seasons_data.append(stats)
+
+            except Exception as e:
+                print(
+                    f"Error fetching season {season} for team {team_id}: {e}")
+                continue
+
+        # Create comparison data
+        stat_categories = ['ppg', 'fg_pct',
+                           'fg3_pct', 'reb', 'ast', 'stl', 'blk']
+        comparison_data = []
+
+        for category in stat_categories:
+            data_point = {'stat': category.upper().replace('_PCT', '%')}
+            for season_stats in seasons_data:
+                data_point[season_stats['season']
+                           ] = season_stats.get(category, 0)
+            comparison_data.append(data_point)
+
+        return {
+            'team': {
+                'id': team_id,
+                'name': team_info['full_name'],
+                'abbreviation': team_info['abbreviation']
+            },
+            'seasons': seasons_data,
+            'comparison_data': comparison_data
+        }
+    except Exception as e:
+        print(f"Error getting team historical comparison: {e}")
+        return None

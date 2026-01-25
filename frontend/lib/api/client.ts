@@ -63,4 +63,40 @@ export const getPlayer = async (playerId: string) => {
     return response.data;
 }
 
+// Player comparison functions
+export const comparePlayers = async (playerIds: number[], season: string = "2025-26") => {
+    const ids = playerIds.join(',');
+    const response = await mlApi.get(`/compare/players?player_ids=${ids}&season=${season}`);
+    return response.data;
+}
+
+export const getPlayerHistory = async (playerId: number, seasons: string[]) => {
+    const seasonsParam = seasons.join(',');
+    const response = await mlApi.get(`/player/${playerId}/history?seasons=${seasonsParam}`);
+    return response.data;
+}
+
+export const getPlayerAvailableSeasons = async (playerId: number) => {
+    const response = await mlApi.get(`/player/${playerId}/seasons`);
+    return response.data;
+}
+
+// Team comparison functions
+export const compareTeams = async (teamIds: number[], season: string = "2025-26") => {
+    const ids = teamIds.join(',');
+    const response = await mlApi.get(`/compare/teams?team_ids=${ids}&season=${season}`);
+    return response.data;
+}
+
+export const getTeamHistory = async (teamId: number, seasons: string[]) => {
+    const seasonsParam = seasons.join(',');
+    const response = await mlApi.get(`/team/${teamId}/history?seasons=${seasonsParam}`);
+    return response.data;
+}
+
+export const getTeamAvailableSeasons = async (teamId: number) => {
+    const response = await mlApi.get(`/team/${teamId}/seasons`);
+    return response.data;
+}
+
 export default mlApi
