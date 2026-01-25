@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Target, TrendingUp, Calendar, ArrowRight } from "lucide-react";
+import { Target, TrendingUp, Calendar, ArrowRight, Zap } from "lucide-react";
 import { getPredictions } from "@/lib/api/predictions";
 
 interface Prediction {
@@ -21,14 +21,18 @@ interface Prediction {
   win_probability: number;
 }
 
+type GameCount = 3 | 6 | 9;
+
 export default function Predictions() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gameCount, setGameCount] = useState<GameCount>(3);
 
   useEffect(() => {
     async function fetchPredictions() {
+      setLoading(true);
       try {
-        const data = await getPredictions();
+        const data = await getPredictions(gameCount);
         setPredictions(data);
       } catch (error) {
         console.error("Failed to fetch predictions:", error);
@@ -37,7 +41,7 @@ export default function Predictions() {
       }
     }
     fetchPredictions();
-  }, []);
+  }, [gameCount]);
 
   const chartData = [
     { name: "Mon", accuracy: 65 },
@@ -141,11 +145,32 @@ export default function Predictions() {
 
       {/* Predictions List */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             Upcoming Games
           </h3>
+
+          {/* Game Count Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground mr-2 flex items-center gap-1">
+              <Zap className="h-4 w-4" />
+              Predict:
+            </span>
+            {([3, 6, 9] as GameCount[]).map((count) => (
+              <button
+                key={count}
+                onClick={() => setGameCount(count)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  gameCount === count
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {count} Games
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="divide-y divide-border">

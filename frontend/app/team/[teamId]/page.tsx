@@ -7,20 +7,16 @@ import Image from "next/image";
 import {
   ArrowLeft,
   TrendingUp,
-  TrendingDown,
   Activity,
   Target,
   Trophy,
-  Users,
-  Loader2,
+  Calendar,
+  MapPin,
   RefreshCw,
-  Flame,
 } from "lucide-react";
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,6 +29,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
+import { getTeam } from "@/lib/api/client";
 
 interface TeamDetails {
   team_id: string;
@@ -71,7 +68,6 @@ interface GameLog {
 
 export default function TeamPage() {
   const params = useParams();
-  const router = useRouter();
   const teamId = params.teamId as string;
 
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
@@ -87,17 +83,6 @@ export default function TeamPage() {
     }
   }, [teamId]);
 
-  useEffect(() => {
-    // Auto-refresh every 3 minutes
-    const interval = setInterval(() => {
-      if (teamId) {
-        fetchTeamData(true);
-      }
-    }, 3 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [teamId]);
-
   const fetchTeamData = async (isAutoRefresh = false) => {
     try {
       if (isAutoRefresh) {
@@ -106,22 +91,15 @@ export default function TeamPage() {
         setLoading(true);
       }
 
-      const response = await fetch(
-        `http://localhost:8000/api/v1/team/${teamId}?season=2025-26&_t=${Date.now()}`
-      );
+      const data = await getTeam(teamId);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch team data");
-      }
-
-      const data = await response.json();
       setTeamDetails(data.team);
       setGameLogs(data.recent_games || []);
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {
       console.error("Error fetching team data:", err);
-      setError("Failed to load team data");
+      setError("Failed to load team data. Checking backend service...");
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -134,10 +112,12 @@ export default function TeamPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 text-neon-green animate-spin" />
-          <p className="text-gray-400">Loading team data...</p>
+          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-muted-foreground animate-pulse">
+            Analyzing Season Performance...
+          </p>
         </div>
       </div>
     );
@@ -145,15 +125,21 @@ export default function TeamPage() {
 
   if (error || !teamDetails) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error || "Team not found"}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card text-card-foreground p-8 rounded-xl border border-border max-w-md w-full text-center shadow-lg">
+          <div className="bg-destructive/10 text-destructive p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+            <Activity className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Data Unavailable</h2>
+          <p className="text-muted-foreground mb-6">
+            {error || "Team not found"}
+          </p>
           <Link
-            href="/"
-            className="text-neon-green hover:underline flex items-center gap-2 justify-center"
+            href="/teams"
+            className="inline-flex items-center gap-2 text-primary hover:underline justify-center font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Standings
+            Return to Team List
           </Link>
         </div>
       </div>
@@ -169,353 +155,342 @@ export default function TeamPage() {
     points: game.pts,
     opponent_points: game.opp_pts,
     fg_pct: game.fg_pct * 100,
+    margin: game.pts - game.opp_pts,
   }));
 
   const statsRadarData = [
-    { stat: "Scoring", value: (teamDetails.ppg / 130) * 100 },
-    { stat: "Defense", value: (1 - teamDetails.opp_ppg / 130) * 100 },
-    { stat: "FG%", value: teamDetails.fg_pct * 100 },
-    { stat: "3PT%", value: teamDetails.fg3_pct * 100 },
-    { stat: "FT%", value: teamDetails.ft_pct * 100 },
-    { stat: "Rebounds", value: (teamDetails.reb / 50) * 100 },
+    { stat: "Scoring", value: (teamDetails.ppg / 130) * 100, fullMark: 100 },
+    {
+      stat: "Defense",
+      value: (1 - (teamDetails.opp_ppg - 90) / 50) * 100,
+      fullMark: 100,
+    }, // Normalize: Lower opp ppg is better
+    { stat: "Win %", value: teamDetails.win_pct * 100, fullMark: 100 },
+    { stat: "3PT %", value: (teamDetails.fg3_pct / 0.45) * 100, fullMark: 100 }, // Norm based on ~45% elite
+    { stat: "Rebounds", value: (teamDetails.reb / 60) * 100, fullMark: 100 },
+    {
+      stat: "Streak",
+      value: Math.min(
+        teamDetails.streak.startsWith("W")
+          ? parseInt(teamDetails.streak.substring(1)) * 10
+          : 10,
+        100,
+      ),
+      fullMark: 100,
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <nav className="border-b border-neon-green/20 backdrop-blur-sm bg-black/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-white hover:text-neon-green transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Standings</span>
-            </Link>
-            <div className="flex gap-6">
-              <Link
-                href="/predictions"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Predictions
-              </Link>
-              <Link
-                href="/teams"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Recent Games
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background text-foreground pb-12">
+      {/* Hero Header Section */}
+      <div className="relative bg-muted/30 border-b border-border">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Team Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="relative w-24 h-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+          <Link
+            href="/teams"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 text-sm font-medium"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Teams
+          </Link>
+
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
+            <div className="relative w-32 h-32 md:w-40 md:h-40 bg-card rounded-full p-6 border-2 border-border shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
               <Image
                 src={`https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`}
                 alt={teamDetails.team_name}
                 fill
-                className="object-contain"
+                className="object-contain p-4"
               />
             </div>
-            <div>
-              <h1 className="text-5xl font-bold text-white mb-2">
-                {teamDetails.team_name}
-              </h1>
-              <div className="flex items-center gap-4">
-                <p className="text-2xl text-gray-400">2025-26 Season Stats</p>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                    <span className="text-gray-400">Live Data</span>
-                  </div>
-                  {lastUpdated && (
-                    <span className="text-gray-500">
-                      Updated: {lastUpdated.toLocaleTimeString()}
+
+            <div className="flex-1 space-y-4">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2">
+                  {teamDetails.team_name}
+                </h1>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    2025-26 Season
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Target className="h-4 w-4" />
+                    Last 10:{" "}
+                    <span className="text-foreground font-medium">
+                      {teamDetails.last_10}
                     </span>
-                  )}
+                  </span>
                   <button
                     onClick={handleManualRefresh}
                     disabled={isRefreshing}
-                    className="flex items-center gap-1 text-gray-400 hover:text-neon-green transition-colors disabled:opacity-50"
-                    title="Refresh data"
+                    className="flex items-center gap-1.5 hover:text-primary transition-colors disabled:opacity-50"
                   >
                     <RefreshCw
-                      className={`h-4 w-4 ${
-                        isRefreshing ? "animate-spin" : ""
-                      }`}
+                      className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
                     />
+                    {lastUpdated
+                      ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                      : "Refresh"}
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Overall Record</div>
-              <div className="text-3xl font-bold text-white">
-                {teamDetails.wins}-{teamDetails.losses}
-              </div>
-              <div className="text-neon-green text-sm mt-1">
-                {(teamDetails.win_pct * 100).toFixed(1)}% Win Rate
-              </div>
-            </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
+                <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:border-primary/50 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Record
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {teamDetails.wins}-{teamDetails.losses}
+                  </div>
+                  <div
+                    className={`text-xs font-medium ${teamDetails.win_pct * 100 >= 50 ? "text-emerald-500" : "text-rose-500"}`}
+                  >
+                    {(teamDetails.win_pct * 100).toFixed(1)}% Win Rate
+                  </div>
+                </div>
 
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Conf. Rank</div>
-              <div className="text-3xl font-bold text-white">
-                #{teamDetails.conf_rank}
-              </div>
-              <div className="text-gray-500 text-sm mt-1">
-                Last 10: {teamDetails.last_10}
-              </div>
-            </div>
+                <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:border-primary/50 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Conf Rank
+                  </div>
+                  <div className="text-2xl font-bold">
+                    #{teamDetails.conf_rank}
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    Streak:{" "}
+                    <span
+                      className={
+                        teamDetails.streak.startsWith("W")
+                          ? "text-emerald-500 font-bold"
+                          : "text-rose-500 font-bold"
+                      }
+                    >
+                      {teamDetails.streak}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">PPG</div>
-              <div className="text-3xl font-bold text-white">
-                {teamDetails.ppg.toFixed(1)}
-              </div>
-              <div className="text-gray-500 text-sm mt-1">
-                Opp: {teamDetails.opp_ppg.toFixed(1)}
-              </div>
-            </div>
+                <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:border-primary/50 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Scoring
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {teamDetails.ppg.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Points Per Game
+                  </div>
+                </div>
 
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Streak</div>
-              <div className="flex items-center gap-2">
-                {teamDetails.streak.startsWith("W") ? (
-                  <Flame className="h-6 w-6 text-orange-500" />
-                ) : (
-                  <TrendingDown className="h-6 w-6 text-red-500" />
-                )}
-                <div className="text-3xl font-bold text-white">
-                  {teamDetails.streak}
+                <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:border-primary/50 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Defense
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {teamDetails.opp_ppg.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Opp Points PG
+                  </div>
                 </div>
               </div>
-              <div className="text-gray-500 text-sm mt-1">Current Streak</div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Home/Away</div>
-              <div className="text-xl font-bold text-white">
-                {teamDetails.home_record}
-              </div>
-              <div className="text-gray-500 text-sm mt-1">Home</div>
-              <div className="text-xl font-bold text-white mt-1">
-                {teamDetails.away_record}
-              </div>
-              <div className="text-gray-500 text-sm">Away</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          {/* Performance Chart */}
+          <div className="lg:col-span-2 card-base p-6 border border-border bg-card rounded-xl shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Performance Trend (Last 10)
+              </h3>
+            </div>
+            <div className="h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={performanceData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#27272a"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="game"
+                    stroke="#a1a1aa"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={{ stroke: "#27272a" }}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke="#a1a1aa"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-10}
+                    domain={["auto", "auto"]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#18181b", // card
+                      borderColor: "#27272a", // border
+                      borderRadius: "8px",
+                      color: "#fafafa", // foreground
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Line
+                    type="monotone"
+                    dataKey="points"
+                    name="Team Points"
+                    stroke="#3b82f6" // primary
+                    strokeWidth={3}
+                    dot={{
+                      r: 4,
+                      fill: "#3b82f6",
+                      strokeWidth: 2,
+                      stroke: "#09090b",
+                    }} // primary, background
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="opponent_points"
+                    name="Opponent Points"
+                    stroke="#a1a1aa" // muted-foreground
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Radar Chart */}
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              Team Profile
+            </h3>
+            <div className="h-[300px] w-full flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="70%"
+                  data={statsRadarData}
+                >
+                  <PolarGrid stroke="#27272a" />
+                  <PolarAngleAxis
+                    dataKey="stat"
+                    tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis
+                    angle={30}
+                    domain={[0, 100]}
+                    tick={false}
+                    axisLine={false}
+                  />
+                  <Radar
+                    name={teamDetails.team_name}
+                    dataKey="value"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.3}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 text-center text-xs text-muted-foreground">
+              Normalized relative to league averages
             </div>
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          {/* Performance Trend */}
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-neon-green" />
-              Last 10 Games Performance
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="game" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1F2937",
-                    border: "1px solid #39FF14",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="points"
-                  stroke="#39FF14"
-                  strokeWidth={2}
-                  name="Team Points"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="opponent_points"
-                  stroke="#EF4444"
-                  strokeWidth={2}
-                  name="Opp Points"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Recent Games Table */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-border bg-muted/40 flex items-center justify-between">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Recent Game Log
+            </h3>
+            <span className="text-xs font-mono text-muted-foreground bg-secondary/50 px-2 py-1 rounded">
+              LAS {gameLogs.length} GAMES
+            </span>
           </div>
-
-          {/* Team Stats Radar */}
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Activity className="h-6 w-6 text-neon-green" />
-              Overall Performance
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={statsRadarData}>
-                <PolarGrid stroke="#374151" />
-                <PolarAngleAxis dataKey="stat" stroke="#9CA3AF" />
-                <PolarRadiusAxis stroke="#9CA3AF" />
-                <Radar
-                  name="Team Stats"
-                  dataKey="value"
-                  stroke="#39FF14"
-                  fill="#39FF14"
-                  fillOpacity={0.3}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Shooting Stats */}
-        <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <Target className="h-6 w-6 text-neon-green" />
-            Shooting Statistics
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-5xl font-bold text-white mb-2">
-                {(teamDetails.fg_pct * 100).toFixed(1)}%
-              </div>
-              <div className="text-gray-400">Field Goal %</div>
-              <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
-                <div
-                  className="bg-neon-green h-2 rounded-full"
-                  style={{ width: `${teamDetails.fg_pct * 100}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-white mb-2">
-                {(teamDetails.fg3_pct * 100).toFixed(1)}%
-              </div>
-              <div className="text-gray-400">Three Point %</div>
-              <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
-                <div
-                  className="bg-neon-green h-2 rounded-full"
-                  style={{ width: `${teamDetails.fg3_pct * 100}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-white mb-2">
-                {(teamDetails.ft_pct * 100).toFixed(1)}%
-              </div>
-              <div className="text-gray-400">Free Throw %</div>
-              <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
-                <div
-                  className="bg-neon-green h-2 rounded-full"
-                  style={{ width: `${teamDetails.ft_pct * 100}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Games */}
-        <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-neon-green" />
-              Recent Games ({gameLogs.length} matches)
-            </h2>
-            {isRefreshing && (
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Updating...</span>
-              </div>
-            )}
-          </div>
-          <div className="space-y-3">
-            {gameLogs.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                No recent games available
-              </div>
-            ) : (
-              last10Games.map((game, idx) => {
-                const isWin = game.result === "W";
-                const margin = Math.abs(game.pts - game.opp_pts);
-                const isHome = game.location === "vs";
-                return (
-                  <div
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted/50 text-muted-foreground uppercase text-xs tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">Date</th>
+                  <th className="px-6 py-4 font-semibold">Opponent</th>
+                  <th className="px-6 py-4 font-semibold">Result</th>
+                  <th className="px-6 py-4 font-semibold">Score</th>
+                  <th className="px-6 py-4 font-semibold">FG%</th>
+                  <th className="px-6 py-4 font-semibold rounded-tr-xl">+/-</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {gameLogs.map((game, idx) => (
+                  <tr
                     key={idx}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-all ${
-                      isWin
-                        ? "bg-green-900/20 border border-green-500/30 hover:bg-green-900/30"
-                        : "bg-red-900/20 border border-red-500/30 hover:bg-red-900/30"
-                    }`}
+                    className="hover:bg-muted/30 transition-colors group"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col items-center">
-                        <span
-                          className={`text-2xl font-bold ${
-                            isWin ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {game.result}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          Game {idx + 1}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="text-white font-semibold flex items-center gap-2">
-                          <span className="text-gray-400 text-sm">
-                            {game.location || "vs"}
-                          </span>
-                          <span>{game.opponent}</span>
-                          {isHome ? (
-                            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
-                              HOME
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">
-                              AWAY
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-gray-400 text-sm">{game.date}</div>
-                      </div>
-                    </div>
-                    <div className="text-right min-w-[120px]">
-                      <div
-                        className={`font-bold text-lg ${
-                          isWin ? "text-green-400" : "text-red-400"
+                    <td className="px-6 py-4 font-medium text-foreground">
+                      {game.date}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="flex items-center gap-2">
+                        {game.location === "@" ? (
+                          <MapPin className="h-3 w-3 text-rose-400" />
+                        ) : (
+                          <MapPin className="h-3 w-3 text-emerald-400" />
+                        )}
+                        <span className="font-medium">{game.opponent}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset ${
+                          game.result === "W"
+                            ? "bg-emerald-500/10 text-emerald-500 ring-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-500 ring-rose-500/20"
                         }`}
                       >
-                        {game.pts} - {game.opp_pts}
-                      </div>
-                      <div className="text-gray-400 text-sm">
-                        {isWin ? "+" : "-"}
-                        {margin} • {(game.fg_pct * 100).toFixed(1)}% FG
-                      </div>
-                      {game.reb !== undefined && game.ast !== undefined && (
-                        <div className="text-gray-500 text-xs mt-1">
-                          {game.reb} REB • {game.ast} AST
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                        {game.result}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-foreground font-mono">
+                      {game.pts} - {game.opp_pts}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground group-hover:text-foreground transition-colors">
+                      {(game.fg_pct * 100).toFixed(1)}%
+                    </td>
+                    <td
+                      className={`px-6 py-4 font-medium ${
+                        game.pts - game.opp_pts > 0
+                          ? "text-emerald-500"
+                          : "text-rose-500"
+                      }`}
+                    >
+                      {game.pts - game.opp_pts > 0 ? "+" : ""}
+                      {game.pts - game.opp_pts}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

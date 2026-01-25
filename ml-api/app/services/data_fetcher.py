@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
-from nba_api.stats.endpoints import TeamGameLog, PlayerGameLog, CommonTeamRoster, leaguedashteamstats, leaguedashplayerstats, scoreboardv2
+from nba_api.stats.endpoints import TeamGameLog, PlayerGameLog, CommonTeamRoster, leaguedashteamstats, leaguedashplayerstats, scoreboardv2, commonplayerinfo
 from nba_api.stats.static import teams, players
 import pandas as pd
 
@@ -64,13 +64,30 @@ async def get_recent_games(days_back: int = 3) -> List[Dict[str, Any]]:
         return []
 
 
+def get_team_conference(team_id: int) -> str:
+    """Get conference for a team ID"""
+    east_ids = [1610612737, 1610612738, 1610612751, 1610612766, 1610612741,
+                1610612739, 1610612765, 1610612754, 1610612748, 1610612749,
+                1610612752, 1610612753, 1610612755, 1610612761, 1610612764]
+    return "East" if team_id in east_ids else "West"
+
+
 async def get_current_standings(season: str = "2025-26") -> List[Dict[str, Any]]:
     """
-    Fetch current season standings
+    Fetch current season standings with conference info
     """
     try:
         team_stats = leaguedashteamstats.LeagueDashTeamStats(season=season)
         df_teams = team_stats.get_data_frames()[0]
+
+        # Add conference column
+        df_teams['CONFERENCE'] = df_teams['TEAM_ID'].apply(get_team_conference)
+
+        # Calculate conference rank
+        df_teams['CONF_RANK'] = df_teams.groupby('CONFERENCE')['W_PCT'].rank(
+            ascending=False, method='min').astype(int)
+
+        # Sort by win percentage
         top_teams = df_teams.sort_values(by='W_PCT', ascending=False)
         return top_teams.to_dict('records')
     except Exception as e:
@@ -571,3 +588,78 @@ def find_player_by_name(player_name: str) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"Error finding player: {e}")
         return []
+
+
+async def get_player_details(player_id: int, season: str = "2025-26") -> Dict[str, Any]:
+    """
+    Fetch detailed statistics for a specific player
+    """
+    try:
+        # Get common player info
+        info = commonplayerinfo.CommonPlayerInfo(player_id=player_id)
+        df_info = info.get_data_frames()[0]
+
+        if df_info.empty:
+            return None
+
+        player_info = df_info.iloc[0].to_dict()
+
+        # Get game logs
+        gamelog = PlayerGameLog(player_id=player_id, season=season)
+        df_logs = gamelog.get_data_frames()[0]
+
+        # Process recent games
+        recent_games = []
+        if not df_logs.empty:
+            for _, game in df_logs.head(10).iterrows():
+                recent_games.append({
+                    'game_id': game['Game_ID'],
+                    'date': game['GAME_DATE'],
+                    'matchup': game['MATCHUP'],
+                    'wl': game['WL'],
+                    'pts': int(game['PTS']),
+                    'reb': int(game['REB']),
+                    'ast': int(game['AST']),
+                    'stl': int(game['STL']),
+                    'blk': int(game['BLK']),
+                    'fg_pct': float(game['FG_PCT']),
+                    'fg3_pct': float(game['FG3_PCT']),
+                    'ft_pct': float(game['FT_PCT']),
+                    'min': str(game['MIN'])
+                })
+
+        # Calculate season averages from logs if not available elsewhere easily
+        season_stats = {}
+        if not df_logs.empty:
+            season_stats = {
+                'ppg': float(df_logs['PTS'].mean()),
+                'rpg': float(df_logs['REB'].mean()),
+                'apg': float(df_logs['AST'].mean()),
+                'spg': float(df_logs['STL'].mean()),
+                'bpg': float(df_logs['BLK'].mean()),
+                'fg_pct': float(df_logs['FG_PCT'].mean()),
+                'fg3_pct': float(df_logs['FG3_PCT'].mean()),
+                'ft_pct': float(df_logs['FT_PCT'].mean()),
+                'games_played': len(df_logs)
+            }
+
+        return {
+            'info': {
+                'id': int(player_info['PERSON_ID']),
+                'name': player_info['DISPLAY_FIRST_LAST'],
+                'team': player_info['TEAM_NAME'],
+                'team_id': int(player_info['TEAM_ID']),
+                'position': player_info['POSITION'],
+                'height': player_info['HEIGHT'],
+                'weight': player_info['WEIGHT'],
+                'jersey': player_info['JERSEY'],
+                'country': player_info['COUNTRY'],
+                'draft_year': player_info['DRAFT_YEAR'],
+                'experience': player_info['SEASON_EXP']
+            },
+            'stats': season_stats,
+            'recent_games': recent_games
+        }
+    except Exception as e:
+        print(f"Error fetching player details: {e}")
+        return None

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Search, Filter, User, Activity, Zap } from "lucide-react";
 import { getPlayers } from "@/lib/api/client";
 
@@ -24,11 +25,17 @@ export default function Players() {
     fetchData();
   }, []);
 
-  const filteredPlayers = Array.isArray(players) ? players.filter(
-    (player) =>
-      player.PLAYER_NAME?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      player.TEAM_ABBREVIATION?.toLowerCase().includes(searchQuery.toLowerCase()),
-  ) : [];
+  const filteredPlayers = Array.isArray(players)
+    ? players.filter(
+        (player) =>
+          player.PLAYER_NAME?.toLowerCase().includes(
+            searchQuery.toLowerCase(),
+          ) ||
+          player.TEAM_ABBREVIATION?.toLowerCase().includes(
+            searchQuery.toLowerCase(),
+          ),
+      )
+    : [];
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -88,40 +95,78 @@ export default function Players() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                   <td colSpan={7} className="p-8 text-center text-muted-foreground">Loading players...</td>
+                  <td
+                    colSpan={7}
+                    className="p-8 text-center text-muted-foreground"
+                  >
+                    Loading players...
+                  </td>
                 </tr>
-              ) : filteredPlayers.map((player) => (
-                <tr key={player.PLAYER_ID} className="hover:bg-secondary/20 transition-colors group">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary">
-                        <User className="h-5 w-5" />
+              ) : (
+                filteredPlayers.map((player) => (
+                  <tr
+                    key={player.PLAYER_ID}
+                    className="hover:bg-secondary/20 transition-colors group cursor-pointer"
+                  >
+                    <td className="p-4">
+                      <Link
+                        href={`/player/${player.PLAYER_ID}`}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary relative overflow-hidden">
+                          {/* Add small thumbnail if you want, but using User icon as fallback is fine. 
+                               Actually, since we have the ID, we can show the face here too! */}
+                          <img
+                            src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`}
+                            alt={player.PLAYER_NAME}
+                            className="w-full h-full object-cover object-top scale-125 pt-2"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                              (
+                                (e.target as HTMLImageElement)
+                                  .nextSibling as HTMLElement
+                              ).style.display = "flex";
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-secondary hidden">
+                            <User className="h-5 w-5" />
+                          </div>
+                        </div>
+                        <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {player.PLAYER_NAME}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 bg-secondary rounded text-xs font-mono text-muted-foreground">
+                        {player.TEAM_ABBREVIATION}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold text-foreground">
+                      {player.PTS}
+                    </td>
+                    <td className="p-4 text-muted-foreground">{player.REB}</td>
+                    <td className="p-4 text-muted-foreground">{player.AST}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          {(player.FG_PCT * 100).toFixed(1)}%
+                        </span>
+                        <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full"
+                            style={{ width: `${player.FG_PCT * 100}%` }}
+                          />
+                        </div>
                       </div>
-                      <span className="font-medium text-foreground group-hover:text-primary transition-colors">{player.PLAYER_NAME}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 bg-secondary rounded text-xs font-mono text-muted-foreground">{player.TEAM_ABBREVIATION}</span>
-                  </td>
-                  <td className="p-4 font-bold text-foreground">{player.PTS}</td>
-                  <td className="p-4 text-muted-foreground">{player.REB}</td>
-                  <td className="p-4 text-muted-foreground">{player.AST}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                       <span className="text-sm font-medium text-foreground">{(player.FG_PCT * 100).toFixed(1)}%</span>
-                       <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
-                         <div 
-                           className="h-full bg-blue-500 rounded-full" 
-                           style={{ width: `${player.FG_PCT * 100}%` }} 
-                         />
-                       </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <Zap className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="p-4">
+                      <Zap className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

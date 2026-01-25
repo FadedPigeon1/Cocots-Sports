@@ -53,4 +53,14 @@ export const getPlayers = async () => {
     return response.data;
 }
 
+export const getTeam = async (teamId: string) => {
+    const response = await mlApi.get(`/team/${teamId}?season=2025-26`);
+    return response.data;
+}
+
+export const getPlayer = async (playerId: string) => {
+    const response = await mlApi.get(`/player/${playerId}`);
+    return response.data;
+}
+
 export default mlApi

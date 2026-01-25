@@ -41,7 +41,7 @@ export default function Home() {
         <div className="absolute top-0 right-0 p-20 bg-primary/20 blur-[120px] rounded-full -z-10 opacity-30" />
         <div className="absolute bottom-0 left-0 p-20 bg-nba-red/10 blur-[100px] rounded-full -z-10 opacity-20" />
 
-        <div className="container px-4 md:px-6">
+        <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row gap-12 items-center">
             <div className="flex-1 space-y-8 text-center lg:text-left">
               <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm">
@@ -122,7 +122,7 @@ export default function Home() {
 
       {/* Features Grid */}
       <section className="py-20 bg-muted/30">
-        <div className="container px-4 md:px-6">
+        <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex flex-col space-y-4 p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all">
               <div className="p-3 w-fit rounded-xl bg-blue-500/10 text-blue-500">
@@ -160,7 +160,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-20 border-t border-border/40">
-        <div className="container px-4 md:px-6 text-center">
+        <div className="container mx-auto px-4 md:px-6 text-center">
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl font-bold sm:text-4xl">
               Ready to elevate your game analysis?
