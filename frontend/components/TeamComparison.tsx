@@ -276,7 +276,7 @@ export default function TeamComparison() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-card rounded-xl border border-border p-6">
+      <div className="glass rounded-xl border border-border p-6 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -290,13 +290,13 @@ export default function TeamComparison() {
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex bg-secondary rounded-lg p-1">
+          <div className="flex bg-secondary/50 rounded-lg p-1 border border-border">
             <button
               onClick={() => setActiveTab("compare")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeTab === "compare"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
               }`}
             >
               <TrendingUp className="h-4 w-4 inline mr-2" />
@@ -304,10 +304,10 @@ export default function TeamComparison() {
             </button>
             <button
               onClick={() => setActiveTab("history")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeTab === "history"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
               }`}
             >
               <History className="h-4 w-4 inline mr-2" />
@@ -321,266 +321,308 @@ export default function TeamComparison() {
       {activeTab === "compare" && (
         <>
           {/* Team Selection */}
-          <div className="bg-card rounded-xl border border-border p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Selected Teams */}
-              {selectedTeams.map((teamId, idx) => {
-                const teamName =
-                  comparisonData?.teams.find((t) => t.team_id === teamId)
-                    ?.name || getTeamNameById(teamId);
-                return (
-                  <div
-                    key={teamId}
-                    className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg"
-                    style={{ borderLeft: `3px solid ${CHART_COLORS[idx]}` }}
-                  >
-                    <div className="relative w-6 h-6">
-                      <Image
-                        src={getTeamLogo(String(teamId))}
-                        alt={teamName}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {teamName}
-                    </span>
-                    <button
-                      onClick={() => removeTeam(teamId)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
+          <div className="glass-card rounded-xl p-6 relative z-20">
+            <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+              <div className="flex flex-wrap items-center gap-3 w-full">
+                {/* Selected Teams */}
+                {selectedTeams.map((teamId, idx) => {
+                  const teamName =
+                    comparisonData?.teams.find((t) => t.team_id === teamId)
+                      ?.name || getTeamNameById(teamId);
+                  return (
+                    <div
+                      key={teamId}
+                      className="flex items-center gap-2 bg-secondary/80 border border-border px-3 py-2 rounded-lg shadow-sm animate-in fade-in zoom-in duration-200"
+                      style={{ borderLeft: `3px solid ${CHART_COLORS[idx]}` }}
                     >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-
-              {/* Add Team Button */}
-              {selectedTeams.length < 5 && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTeamSelector(!showTeamSelector)}
-                    className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg hover:bg-primary/20 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Team
-                  </button>
-
-                  {/* Team Selector Dropdown */}
-                  {showTeamSelector && (
-                    <div className="absolute top-full mt-2 left-0 w-72 bg-card border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                      <div className="p-2 border-b border-border">
-                        <p className="text-xs font-medium text-muted-foreground uppercase">
-                          Eastern Conference
-                        </p>
+                      <div className="relative w-6 h-6">
+                        <Image
+                          src={getTeamLogo(String(teamId))}
+                          alt={teamName}
+                          fill
+                          className="object-contain"
+                        />
                       </div>
-                      {EASTERN_CONFERENCE.filter(
-                        (t) => !selectedTeams.includes(parseInt(t.id)),
-                      ).map((team) => (
-                        <button
-                          key={team.id}
-                          onClick={() => addTeam(parseInt(team.id))}
-                          className="w-full px-4 py-2 text-left hover:bg-secondary transition-colors flex items-center gap-3"
-                        >
-                          <div className="relative w-6 h-6">
-                            <Image
-                              src={getTeamLogo(team.id)}
-                              alt={team.name}
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
-                          <span className="text-sm text-foreground">
-                            {team.name}
-                          </span>
-                        </button>
-                      ))}
-                      <div className="p-2 border-b border-t border-border">
-                        <p className="text-xs font-medium text-muted-foreground uppercase">
-                          Western Conference
-                        </p>
-                      </div>
-                      {WESTERN_CONFERENCE.filter(
-                        (t) => !selectedTeams.includes(parseInt(t.id)),
-                      ).map((team) => (
-                        <button
-                          key={team.id}
-                          onClick={() => addTeam(parseInt(team.id))}
-                          className="w-full px-4 py-2 text-left hover:bg-secondary transition-colors flex items-center gap-3"
-                        >
-                          <div className="relative w-6 h-6">
-                            <Image
-                              src={getTeamLogo(team.id)}
-                              alt={team.name}
-                              fill
-                              className="object-contain"
-                            />
-                          </div>
-                          <span className="text-sm text-foreground">
-                            {team.name}
-                          </span>
-                        </button>
-                      ))}
+                      <span className="text-sm font-medium text-foreground">
+                        {teamName}
+                      </span>
+                      <button
+                        onClick={() => removeTeam(teamId)}
+                        className="text-muted-foreground hover:text-destructive transition-colors ml-1 p-0.5 rounded-full hover:bg-destructive/10"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
+                  );
+                })}
+
+                {/* Add Team Button */}
+                {selectedTeams.length < 5 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowTeamSelector(!showTeamSelector)}
+                      className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-lg hover:bg-primary/20 transition-all duration-200 text-sm font-medium"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Team
+                    </button>
+
+                    {/* Team Selector Dropdown */}
+                    {showTeamSelector && (
+                      <div className="absolute top-full mt-2 left-0 w-72 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                        <div className="p-2 border-b border-border bg-secondary/30 sticky top-0 backdrop-blur-sm z-10">
+                          <p className="text-xs font-bold text-muted-foreground uppercase px-2">
+                            Eastern Conference
+                          </p>
+                        </div>
+                        {EASTERN_CONFERENCE.filter(
+                          (t) => !selectedTeams.includes(parseInt(t.id)),
+                        ).map((team) => (
+                          <button
+                            key={team.id}
+                            onClick={() => addTeam(parseInt(team.id))}
+                            className="w-full px-4 py-3 text-left hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3 border-b border-border/40 last:border-0"
+                          >
+                            <div className="relative w-6 h-6">
+                              <Image
+                                src={getTeamLogo(team.id)}
+                                alt={team.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                            <span className="text-sm font-medium">
+                              {team.name}
+                            </span>
+                          </button>
+                        ))}
+                        <div className="p-2 border-b border-t border-border bg-secondary/30 sticky top-0 backdrop-blur-sm z-10">
+                          <p className="text-xs font-bold text-muted-foreground uppercase px-2">
+                            Western Conference
+                          </p>
+                        </div>
+                        {WESTERN_CONFERENCE.filter(
+                          (t) => !selectedTeams.includes(parseInt(t.id)),
+                        ).map((team) => (
+                          <button
+                            key={team.id}
+                            onClick={() => addTeam(parseInt(team.id))}
+                            className="w-full px-4 py-3 text-left hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3 border-b border-border/40 last:border-0"
+                          >
+                            <div className="relative w-6 h-6">
+                              <Image
+                                src={getTeamLogo(team.id)}
+                                alt={team.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                            <span className="text-sm font-medium">
+                              {team.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Season Selector */}
-              <div className="ml-auto">
-                <select
-                  value={season}
-                  onChange={(e) => setSeason(e.target.value)}
-                  className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {availableSeasons.slice(-5).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+              <div className="min-w-[140px]">
+                <div className="relative">
+                  <select
+                    value={season}
+                    onChange={(e) => setSeason(e.target.value)}
+                    className="w-full appearance-none bg-secondary/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                  >
+                    {availableSeasons.slice(-5).map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Comparison Charts */}
           {loading ? (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground mt-4">
-                Loading comparison data...
+            <div className="glass-card rounded-xl p-20 text-center flex flex-col items-center justify-center min-h-[400px]">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-primary/40" />
+                </div>
+              </div>
+              <p className="text-muted-foreground mt-6 font-medium">
+                Crunching the numbers...
               </p>
             </div>
           ) : comparisonData && comparisonData.teams.length > 0 ? (
             <>
               {/* Stats Comparison Table */}
-              <div className="bg-card rounded-xl border border-border p-6 overflow-x-auto">
-                <h3 className="text-lg font-bold text-foreground mb-4">
-                  Team Statistics
-                </h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-2 text-muted-foreground font-medium">
-                        Team
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        Record
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        Win%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        PPG
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        FG%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        3P%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        REB
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        AST
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        STL
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        +/-
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonData.teams.map((team, idx) => (
-                      <tr
-                        key={team.team_id}
-                        className="border-b border-border/50 hover:bg-secondary/50"
-                      >
-                        <td className="py-3 px-2">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: CHART_COLORS[idx] }}
-                            />
-                            <div className="relative w-6 h-6">
-                              <Image
-                                src={getTeamLogo(String(team.team_id))}
-                                alt={team.name}
-                                fill
-                                className="object-contain"
-                              />
-                            </div>
-                            <span className="font-medium text-foreground">
-                              {team.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.wins}-{team.losses}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground font-medium">
-                          {team.win_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.ppg}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.fg_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.fg3_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.reb}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.ast}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {team.stl}
-                        </td>
-                        <td
-                          className={`text-center py-3 px-2 font-medium ${team.plus_minus >= 0 ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {team.plus_minus >= 0 ? "+" : ""}
-                          {team.plus_minus}
-                        </td>
+              <div className="glass-card rounded-xl overflow-hidden">
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-lg font-bold text-foreground">
+                    Team Statistics
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-secondary/30">
+                        <th className="text-left py-4 px-6 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Team
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Record
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Win%
+                        </th>
+                        <th className="text-center py-4 px-4 font-semibold uppercase tracking-wider text-xs text-foreground bg-primary/5">
+                          PPG
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          FG%
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          3P%
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          REB
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          AST
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          STL
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          +/-
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {comparisonData.teams.map((team, idx) => (
+                        <tr
+                          key={team.team_id}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-2 h-8 rounded-full"
+                                style={{ backgroundColor: CHART_COLORS[idx] }}
+                              />
+                              <div className="relative w-6 h-6">
+                                <Image
+                                  src={getTeamLogo(String(team.team_id))}
+                                  alt={team.name}
+                                  fill
+                                  className="object-contain"
+                                />
+                              </div>
+                              <span className="font-semibold text-foreground">
+                                {team.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground font-medium">
+                            {team.wins}-{team.losses}
+                          </td>
+                          <td className="text-center py-4 px-4 text-muted-foreground">
+                            {team.win_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 font-bold text-foreground bg-primary/5 text-base">
+                            {team.ppg}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {team.fg_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {team.fg3_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {team.reb}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {team.ast}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {team.stl}
+                          </td>
+                          <td
+                            className={`text-center py-4 px-4 font-bold ${team.plus_minus >= 0 ? "text-green-500" : "text-red-500"}`}
+                          >
+                            {team.plus_minus >= 0 ? "+" : ""}
+                            {team.plus_minus}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Charts Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Win Trend Chart */}
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="text-lg font-bold text-foreground mb-4">
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-6">
                     Win Trajectory
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={prepareGameChartData()}>
+                      <LineChart
+                        data={prepareGameChartData()}
+                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                      >
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
+                          stroke="var(--border)"
+                          vertical={false}
+                          opacity={0.5}
                         />
                         <XAxis
                           dataKey="game_num"
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ dy: 10 }}
                         />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <YAxis
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
+                            color: "var(--foreground)",
                           }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} />
                         {comparisonData.teams.map((team, idx) => (
                           <Line
                             key={team.team_id}
@@ -588,8 +630,13 @@ export default function TeamComparison() {
                             dataKey={`${team.name}_wins`}
                             name={team.name}
                             stroke={CHART_COLORS[idx]}
-                            strokeWidth={2}
-                            dot={false}
+                            strokeWidth={3}
+                            dot={{
+                              r: 4,
+                              strokeWidth: 0,
+                              fill: CHART_COLORS[idx],
+                            }}
+                            activeDot={{ r: 6, strokeWidth: 0 }}
                           />
                         ))}
                       </LineChart>
@@ -598,22 +645,33 @@ export default function TeamComparison() {
                 </div>
 
                 {/* Radar Chart */}
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="text-lg font-bold text-foreground mb-4">
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-6">
                     Team Identity
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={comparisonData.comparison_data}>
-                        <PolarGrid stroke="hsl(var(--border))" />
+                      <RadarChart
+                        cx="50%"
+                        cy="50%"
+                        outerRadius="80%"
+                        data={comparisonData.comparison_data}
+                      >
+                        <PolarGrid stroke="var(--border)" opacity={0.5} />
                         <PolarAngleAxis
                           dataKey="stat"
                           tick={{
-                            fill: "hsl(var(--muted-foreground))",
+                            fill: "var(--muted-foreground)",
                             fontSize: 12,
+                            fontWeight: 500,
                           }}
                         />
-                        <PolarRadiusAxis tick={false} />
+                        <PolarRadiusAxis
+                          angle={30}
+                          domain={[0, "auto"]}
+                          tick={false}
+                          axisLine={false}
+                        />
                         {comparisonData.teams.map((team, idx) => (
                           <Radar
                             key={team.team_id}
@@ -624,44 +682,68 @@ export default function TeamComparison() {
                             fillOpacity={0.2}
                           />
                         ))}
-                        <Legend />
-                        <Tooltip />
+                        <Legend wrapperStyle={{ paddingTop: "10px" }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "8px",
+                            color: "var(--foreground)",
+                          }}
+                        />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* Bar Chart Comparison */}
-                <div className="bg-card rounded-xl border border-border p-6 lg:col-span-2">
-                  <h3 className="text-lg font-bold text-foreground mb-4">
-                    Category Comparison
+                <div className="glass-card rounded-xl p-6 lg:col-span-2">
+                  <h3 className="text-lg font-bold text-foreground mb-6">
+                    Category Leaderboard
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={comparisonData.comparison_data}>
+                      <BarChart
+                        data={comparisonData.comparison_data}
+                        barGap={8}
+                      >
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
+                          stroke="var(--border)"
+                          vertical={false}
+                          opacity={0.5}
                         />
                         <XAxis
                           dataKey="stat"
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ dy: 10 }}
                         />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <YAxis
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip
+                          cursor={{ fill: "var(--secondary)", opacity: 0.2 }}
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
+                            color: "var(--foreground)",
                           }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} />
                         {comparisonData.teams.map((team, idx) => (
                           <Bar
                             key={team.team_id}
                             dataKey={team.name}
                             fill={CHART_COLORS[idx]}
                             radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
                           />
                         ))}
                       </BarChart>
@@ -671,11 +753,23 @@ export default function TeamComparison() {
               </div>
             </>
           ) : (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Select teams to compare their statistics
+            <div className="glass-card rounded-xl p-20 text-center flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 bg-secondary/5">
+              <div className="bg-secondary/20 p-6 rounded-full mb-6">
+                <Users className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                Start Comparing
+              </h3>
+              <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+                Select up to 5 teams to compare their stats, performance trends,
+                and efficiency metrics head-to-head.
               </p>
+              <button
+                onClick={() => setShowTeamSelector(true)}
+                className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 font-medium"
+              >
+                Select First Team
+              </button>
             </div>
           )}
         </>
@@ -685,38 +779,54 @@ export default function TeamComparison() {
       {activeTab === "history" && (
         <>
           {/* Team & Season Selection */}
-          <div className="bg-card rounded-xl border border-border p-6">
+          <div className="glass-card rounded-xl p-6 relative z-20">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Team Selection */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Select Team
                 </label>
-                <select
-                  value={historyTeam || ""}
-                  onChange={(e) =>
-                    setHistoryTeam(
-                      e.target.value ? parseInt(e.target.value) : null,
-                    )
-                  }
-                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select a team...</option>
-                  <optgroup label="Eastern Conference">
-                    {EASTERN_CONFERENCE.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Western Conference">
-                    {WESTERN_CONFERENCE.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                <div className="relative">
+                  <select
+                    value={historyTeam || ""}
+                    onChange={(e) =>
+                      setHistoryTeam(
+                        e.target.value ? parseInt(e.target.value) : null,
+                      )
+                    }
+                    className="w-full appearance-none pl-4 pr-10 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-secondary/80 transition-colors"
+                  >
+                    <option value="">Select a team...</option>
+                    <optgroup label="Eastern Conference">
+                      {EASTERN_CONFERENCE.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Western Conference">
+                      {WESTERN_CONFERENCE.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Compare different eras (e.g., 2015-16 Warriors vs 2022-23
                   Warriors)
@@ -733,10 +843,10 @@ export default function TeamComparison() {
                     <button
                       key={s}
                       onClick={() => toggleSeason(s)}
-                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
                         selectedSeasons.includes(s)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-secondary text-muted-foreground border-border hover:bg-secondary/80 hover:text-foreground"
                       }`}
                     >
                       {s}
@@ -749,16 +859,16 @@ export default function TeamComparison() {
 
           {/* History Charts */}
           {loading ? (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground mt-4">
+            <div className="glass-card rounded-xl p-20 text-center flex flex-col items-center justify-center min-h-[400px]">
+              <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              <p className="text-muted-foreground mt-6 font-medium">
                 Loading history data...
               </p>
             </div>
           ) : historyData && historyData.seasons.length > 0 ? (
             <>
               {/* Team Info */}
-              <div className="bg-card rounded-xl border border-border p-6">
+              <div className="glass-card rounded-xl p-6 bg-linear-to-r from-secondary/50 to-transparent">
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16">
                     <Image
@@ -772,118 +882,140 @@ export default function TeamComparison() {
                     <h3 className="text-xl font-bold text-foreground">
                       {historyData.team.name}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
-                      Comparing {selectedSeasons.length} seasons
+                    <p className="text-muted-foreground text-sm flex items-center gap-2">
+                      <span className="bg-secondary px-2 py-0.5 rounded text-xs">
+                        NBA
+                      </span>
+                      <span>•</span>
+                      <span>Comparing {selectedSeasons.length} seasons</span>
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Stats Table */}
-              <div className="bg-card rounded-xl border border-border p-6 overflow-x-auto">
-                <h3 className="text-lg font-bold text-foreground mb-4">
-                  Season-by-Season Stats
-                </h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-2 text-muted-foreground font-medium">
-                        Season
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        Record
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        Win%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        PPG
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        FG%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        3P%
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        REB
-                      </th>
-                      <th className="text-center py-3 px-2 text-muted-foreground font-medium">
-                        AST
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyData.seasons.map((season, idx) => (
-                      <tr
-                        key={season.season}
-                        className="border-b border-border/50 hover:bg-secondary/50"
-                      >
-                        <td className="py-3 px-2">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: CHART_COLORS[idx] }}
-                            />
-                            <span className="font-medium text-foreground">
-                              {season.season}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.wins}-{season.losses}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground font-medium">
-                          {season.win_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.ppg}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.fg_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.fg3_pct}%
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.reb}
-                        </td>
-                        <td className="text-center py-3 px-2 text-foreground">
-                          {season.ast}
-                        </td>
+              <div className="glass-card rounded-xl overflow-hidden">
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-lg font-bold text-foreground">
+                    Season-by-Season Stats
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-secondary/30">
+                        <th className="text-left py-4 px-6 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Season
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Record
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          Win%
+                        </th>
+                        <th className="text-center py-4 px-4 font-semibold uppercase tracking-wider text-xs text-foreground bg-primary/5">
+                          PPG
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          FG%
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          3P%
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          REB
+                        </th>
+                        <th className="text-center py-4 px-4 text-muted-foreground font-semibold uppercase tracking-wider text-xs">
+                          AST
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {historyData.seasons.map((season, idx) => (
+                        <tr
+                          key={season.season}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-2 h-8 rounded-full"
+                                style={{ backgroundColor: CHART_COLORS[idx] }}
+                              />
+                              <span className="font-semibold text-foreground">
+                                {season.season}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="text-center py-4 px-4 text-muted-foreground">
+                            {season.wins}-{season.losses}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground font-medium">
+                            {season.win_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 font-bold text-foreground bg-primary/5 text-base">
+                            {season.ppg}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {season.fg_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {season.fg3_pct}%
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {season.reb}
+                          </td>
+                          <td className="text-center py-4 px-4 text-foreground">
+                            {season.ast}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Charts Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Win Trend by Season */}
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="text-lg font-bold text-foreground mb-4">
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-6">
                     Win Trajectory by Season
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={prepareHistoryChartData()}>
+                      <LineChart
+                        data={prepareHistoryChartData()}
+                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                      >
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
+                          stroke="var(--border)"
+                          vertical={false}
+                          opacity={0.5}
                         />
                         <XAxis
                           dataKey="game_num"
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
                         />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <YAxis
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
+                            color: "var(--foreground)",
                           }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} />
                         {historyData.seasons.map((season, idx) => (
                           <Line
                             key={season.season}
@@ -891,8 +1023,13 @@ export default function TeamComparison() {
                             dataKey={`${season.season}_wins`}
                             name={season.season}
                             stroke={CHART_COLORS[idx]}
-                            strokeWidth={2}
-                            dot={false}
+                            strokeWidth={3}
+                            dot={{
+                              r: 3,
+                              strokeWidth: 0,
+                              fill: CHART_COLORS[idx],
+                            }}
+                            activeDot={{ r: 5, strokeWidth: 0 }}
                           />
                         ))}
                       </LineChart>
@@ -901,36 +1038,49 @@ export default function TeamComparison() {
                 </div>
 
                 {/* Bar Chart Comparison */}
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="text-lg font-bold text-foreground mb-4">
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-6">
                     Season Comparison
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={historyData.comparison_data}>
+                      <BarChart data={historyData.comparison_data} barGap={8}>
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="hsl(var(--border))"
+                          stroke="var(--border)"
+                          vertical={false}
+                          opacity={0.5}
                         />
                         <XAxis
                           dataKey="stat"
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
                         />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <YAxis
+                          stroke="var(--muted-foreground)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip
+                          cursor={{ fill: "var(--secondary)", opacity: 0.2 }}
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
+                            color: "var(--foreground)",
                           }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} />
                         {historyData.seasons.map((season, idx) => (
                           <Bar
                             key={season.season}
                             dataKey={season.season}
                             fill={CHART_COLORS[idx]}
                             radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
                           />
                         ))}
                       </BarChart>
@@ -940,13 +1090,16 @@ export default function TeamComparison() {
               </div>
             </>
           ) : (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
-              <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Select a team to view their season history
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Compare legendary teams like the 2015-16 Warriors (73-9)
+            <div className="glass-card rounded-xl p-20 text-center flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 bg-secondary/5">
+              <div className="bg-secondary/20 p-6 rounded-full mb-6">
+                <History className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                Track Development
+              </h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">
+                Select a team to analyze how their game has evolved over
+                different seasons.
               </p>
             </div>
           )}
