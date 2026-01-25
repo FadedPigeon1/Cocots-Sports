@@ -94,6 +94,192 @@ async def get_top_players(season: str = "2025-26") -> List[Dict[str, Any]]:
         return []
 
 
+async def get_team_details(team_id: int, season: str = "2025-26") -> Dict[str, Any]:
+    """
+    Fetch detailed statistics for a specific team
+
+    Args:
+        team_id: NBA team ID
+        season: Season string (e.g., "2025-26")
+
+    Returns:
+        Dictionary with team details and recent game logs
+    """
+    try:
+        # Get team stats
+        team_stats = leaguedashteamstats.LeagueDashTeamStats(season=season)
+        df_teams = team_stats.get_data_frames()[0]
+
+        # Find the specific team
+        team_row = df_teams[df_teams['TEAM_ID'] == team_id]
+
+        if team_row.empty:
+            raise ValueError(f"Team {team_id} not found")
+
+        team = team_row.iloc[0]
+
+        # Get game log for recent games
+        try:
+            game_log = TeamGameLog(
+                team_id=team_id,
+                season=season,
+                season_type_all_star="Regular Season"
+            )
+            df_games = game_log.get_data_frames()[0]
+
+            # Process recent games with accurate data
+            recent_games = []
+            for _, game in df_games.head(20).iterrows():
+                # Parse matchup to get opponent and home/away status
+                matchup = game.get('MATCHUP', '')
+                if 'vs.' in matchup:
+                    # Home game - opponent is after "vs."
+                    opponent = matchup.split('vs.')[-1].strip()
+                    location = 'vs'
+                elif '@' in matchup:
+                    # Away game - opponent is after "@"
+                    opponent = matchup.split('@')[-1].strip()
+                    location = '@'
+                else:
+                    opponent = matchup.split()[-1] if matchup else 'Unknown'
+                    location = ''
+
+                # Format the date properly
+                game_date = game.get('GAME_DATE', '')
+                try:
+                    # Convert from YYYY-MM-DD to readable format
+                    if game_date:
+                        date_obj = datetime.strptime(game_date, '%Y-%m-%d')
+                        formatted_date = date_obj.strftime('%b %d, %Y')
+                    else:
+                        formatted_date = game_date
+                except Exception:
+                    formatted_date = game_date
+
+                # Get team and opponent points
+                team_pts = int(game.get('PTS', 0))
+
+                # Try to get opponent points from available fields
+                # The game result format should be "W 120-115" or "L 100-105"
+                wl = game.get('WL', '')
+
+                # Parse from the game columns - look for opponent score
+                # Some versions have it in different columns
+                if 'OPP_PTS' in game and pd.notna(game.get('OPP_PTS')):
+                    opp_pts = int(game.get('OPP_PTS'))
+                else:
+                    # Calculate from plus_minus: opponent_score = team_score - plus_minus
+                    plus_minus = game.get('PLUS_MINUS', 0)
+                    if pd.notna(plus_minus):
+                        opp_pts = team_pts - int(plus_minus)
+                    else:
+                        opp_pts = 0
+
+                recent_games.append({
+                    'date': formatted_date,
+                    'opponent': opponent,
+                    'location': location,
+                    'matchup': matchup,
+                    'result': game.get('WL', ''),
+                    'pts': team_pts,
+                    'opp_pts': opp_pts,
+                    'fg_pct': float(game.get('FG_PCT', 0)),
+                    'fg3_pct': float(game.get('FG3_PCT', 0)),
+                    'reb': int(game.get('REB', 0)),
+                    'ast': int(game.get('AST', 0))
+                })
+        except Exception as e:
+            print(f"Error fetching game log: {e}")
+            recent_games = []
+
+        # Determine conference rank
+        conf_teams = df_teams[df_teams['TEAM_ID'].isin(
+            get_conference_team_ids(team_id)
+        )].sort_values('W_PCT', ascending=False).reset_index(drop=True)
+
+        # Find the rank by position in sorted conference teams
+        conf_rank = 0
+        for idx, row in conf_teams.iterrows():
+            if row['TEAM_ID'] == team_id:
+                conf_rank = idx + 1
+                break
+
+        # Calculate last 10 record
+        last_10_games = df_games.head(
+            10) if not df_games.empty else pd.DataFrame()
+        last_10_wins = (last_10_games['WL'] == 'W').sum(
+        ) if not last_10_games.empty else 0
+        last_10_losses = len(last_10_games) - \
+            last_10_wins if not last_10_games.empty else 0
+
+        # Calculate streak
+        streak = ""
+        if not df_games.empty:
+            current_result = df_games.iloc[0]['WL']
+            streak_count = 1
+            for _, game in df_games.iloc[1:].iterrows():
+                if game['WL'] == current_result:
+                    streak_count += 1
+                else:
+                    break
+            streak = f"{current_result}{streak_count}"
+
+        # Calculate home/away records
+        home_games = df_games[df_games['MATCHUP'].str.contains(
+            'vs.') if 'MATCHUP' in df_games.columns else False]
+        away_games = df_games[df_games['MATCHUP'].str.contains(
+            '@') if 'MATCHUP' in df_games.columns else False]
+
+        home_wins = (home_games['WL'] == 'W').sum(
+        ) if not home_games.empty else 0
+        home_losses = len(home_games) - \
+            home_wins if not home_games.empty else 0
+        away_wins = (away_games['WL'] == 'W').sum(
+        ) if not away_games.empty else 0
+        away_losses = len(away_games) - \
+            away_wins if not away_games.empty else 0
+
+        return {
+            'team': {
+                'team_id': str(team_id),
+                'team_name': team.get('TEAM_NAME', ''),
+                'wins': int(team.get('W', 0)),
+                'losses': int(team.get('L', 0)),
+                'win_pct': float(team.get('W_PCT', 0)),
+                'conf_rank': int(conf_rank),
+                'ppg': float(team.get('PTS', 0)),
+                'opp_ppg': float(team.get('OPP_PTS', 0)) if 'OPP_PTS' in team else 0,
+                'fg_pct': float(team.get('FG_PCT', 0)),
+                'fg3_pct': float(team.get('FG3_PCT', 0)),
+                'ft_pct': float(team.get('FT_PCT', 0)),
+                'reb': float(team.get('REB', 0)),
+                'ast': float(team.get('AST', 0)),
+                'plus_minus': float(team.get('PLUS_MINUS', 0)),
+                'last_10': f"{last_10_wins}-{last_10_losses}",
+                'streak': streak,
+                'home_record': f"{home_wins}-{home_losses}",
+                'away_record': f"{away_wins}-{away_losses}"
+            },
+            'recent_games': recent_games
+        }
+    except Exception as e:
+        print(f"Error fetching team details: {e}")
+        raise
+
+
+def get_conference_team_ids(team_id: int) -> List[int]:
+    """Get all team IDs for the same conference"""
+    east_ids = [1610612737, 1610612738, 1610612751, 1610612766, 1610612741,
+                1610612739, 1610612765, 1610612754, 1610612748, 1610612749,
+                1610612752, 1610612753, 1610612755, 1610612761, 1610612764]
+
+    west_ids = [1610612742, 1610612743, 1610612744, 1610612745, 1610612746,
+                1610612747, 1610612763, 1610612750, 1610612740, 1610612760,
+                1610612756, 1610612757, 1610612758, 1610612759, 1610612762]
+
+    return east_ids if team_id in east_ids else west_ids
+
+
 async def fetch_game_data(team_id: int, game_date: datetime, games_back: int = 10) -> Dict[str, Any]:
     """
     Fetch historical game data for a team using nba_api

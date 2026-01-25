@@ -52,6 +52,39 @@ export async function predictGame(
   return response.data
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getPredictions(): Promise<any[]> {
+    // TODO: Implement backend endpoint for daily predictions
+    // For now, return mock data
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve([
+                {
+                    date: new Date().toISOString(),
+                    home_team: "Lakers",
+                    away_team: "Warriors", 
+                    predicted_winner: "Lakers",
+                    win_probability: 0.65
+                },
+                {
+                    date: new Date().toISOString(),
+                    home_team: "Celtics",
+                    away_team: "Heat",
+                    predicted_winner: "Celtics",
+                    win_probability: 0.72
+                },
+                 {
+                    date: new Date().toISOString(),
+                    home_team: "Nets",
+                    away_team: "Knicks",
+                    predicted_winner: "Knicks",
+                    win_probability: 0.55
+                }
+            ]);
+        }, 1000);
+    });
+}
+
 export async function predictPlayerStats(
   request: PlayerStatsRequest
 ): Promise<PlayerStatsResponse> {

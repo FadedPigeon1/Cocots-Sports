@@ -1,188 +1,126 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, Calendar, Clock, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Search, Filter, Star, MoreHorizontal } from "lucide-react";
+import { getStandings } from "@/lib/api/client";
 
-interface Team {
-  name: string;
-  id: string;
-  score: number;
-}
-
-interface Game {
-  date: string;
-  home_team: Team;
-  away_team: Team;
-  status: string;
-}
-
-export default function RecentGamesPage() {
-  const [games, setGames] = useState<Game[]>([]);
+export default function Teams() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetchRecentGames();
+    async function fetchData() {
+      try {
+        const data = await getStandings();
+        setTeams(data);
+      } catch (error) {
+        console.error("Failed to fetch teams:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
-  const fetchRecentGames = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        "http://localhost:8000/api/v1/games/recent?days_back=3"
-      );
-      const data = await response.json();
-      setGames(data.games || []);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching games:", err);
-      setError("Failed to load recent games. Showing mock data.");
-      // Fallback to mock data
-      setGames([
-        {
-          date: "Dec 8, 2025",
-          home_team: { name: "Detroit Pistons", id: "1610612765", score: 105 },
-          away_team: { name: "Indiana Pacers", id: "1610612754", score: 96 },
-          status: "Final",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTeamLogo = (teamId: string) => {
-    return `https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`;
-  };
+  const filteredTeams = Array.isArray(teams)
+    ? teams.filter((team) =>
+        team.Team?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : [];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <nav className="border-b border-neon-green/20 backdrop-blur-sm bg-black/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-white hover:text-neon-green transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Home</span>
-            </Link>
-            <div className="flex gap-6">
-              <Link
-                href="/predictions"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Predictions
-              </Link>
-              <Link href="/teams" className="text-neon-green font-semibold">
-                Recent Games
-              </Link>
-              <Link
-                href="/players"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Players
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Recent Games</h1>
-          <p className="text-gray-400 text-lg">
-            Latest scores and results from around the league.
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">NBA Teams</h1>
+          <p className="text-muted-foreground mt-2">
+            Track performance, prediction history, and stats.
           </p>
-          {error && <p className="text-yellow-500 text-sm mt-2">{error}</p>}
         </div>
 
+        <div className="flex gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search teams..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full md:w-64 text-foreground placeholder-muted-foreground"
+            />
+          </div>
+          <button className="p-2 bg-card border border-border rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+            <Filter className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Teams Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-12 w-12 text-neon-green animate-spin" />
+          // Skeletons
+          [...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="h-48 bg-card border border-border rounded-xl animate-pulse"
+            />
+          ))
+        ) : filteredTeams.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-muted-foreground">
+            No teams found matching your search.
           </div>
         ) : (
-          <div className="grid gap-6">
-            {games.map((game, index) => (
-              <div
-                key={index}
-                className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-gray-400 text-sm">
-                    <Calendar className="h-4 w-4" />
-                    <span>{game.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-neon-green text-sm font-semibold">
-                    <Clock className="h-4 w-4" />
-                    <span>{game.status}</span>
-                  </div>
+          filteredTeams.map((team, idx) => (
+            <div
+              key={idx}
+              className="group bg-card border border-border rounded-xl p-6 hover:shadow-md hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+
+              <div className="flex justify-between items-start mb-6">
+                <div className="h-16 w-16 bg-secondary rounded-full flex items-center justify-center text-xl font-bold text-primary shadow-inner">
+                  {team.Team.substring(0, 3).toUpperCase()}
                 </div>
-
-                <div className="flex items-center justify-between">
-                  {/* Home Team */}
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="relative w-12 h-12">
-                      <Image
-                        src={getTeamLogo(game.home_team.id)}
-                        alt={game.home_team.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg text-white">
-                        {game.home_team.name}
-                      </p>
-                      <p
-                        className={`text-2xl font-bold ${
-                          game.home_team.score > game.away_team.score
-                            ? "text-neon-green"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {game.home_team.score}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="px-8 text-gray-600 font-bold">VS</div>
-
-                  {/* Away Team */}
-                  <div className="flex items-center gap-4 flex-1 justify-end text-right">
-                    <div>
-                      <p className="font-bold text-lg text-white">
-                        {game.away_team.name}
-                      </p>
-                      <p
-                        className={`text-2xl font-bold ${
-                          game.away_team.score > game.home_team.score
-                            ? "text-neon-green"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {game.away_team.score}
-                      </p>
-                    </div>
-                    <div className="relative w-12 h-12">
-                      <Image
-                        src={getTeamLogo(game.away_team.id)}
-                        alt={game.away_team.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <button className="text-muted-foreground hover:text-yellow-500 transition-colors">
+                  <Star className="h-5 w-5" />
+                </button>
               </div>
-            ))}
-          </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+                  {team.Team}
+                </h3>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  {team.W} - {team.L} Record
+                </p>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-border flex justify-between items-center text-sm">
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Win %
+                  </span>
+                  <span className="font-bold text-foreground">
+                    {team["W/L%"]}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Conf Rank
+                  </span>
+                  <span className="font-bold text-foreground">#{idx + 1}</span>
+                </div>
+                <button className="p-1 hover:bg-secondary rounded hover:text-foreground text-muted-foreground transition-colors">
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          ))
         )}
-      </main>
+      </div>
     </div>
   );
 }

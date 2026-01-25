@@ -1,209 +1,131 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Search, User, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Search, Filter, User, Activity, Zap } from "lucide-react";
+import { getPlayers } from "@/lib/api/client";
 
-export default function PlayersPage() {
+export default function Players() {
   const [searchQuery, setSearchQuery] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [players, setPlayers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const players = [
-    {
-      name: "Shai Gilgeous-Alexander",
-      team: "OKC",
-      ppg: 34.2,
-      rpg: 5.5,
-      apg: 7.8,
-      position: "G",
-      trend: "+1.4",
-    },
-    {
-      name: "Victor Wembanyama",
-      team: "SAS",
-      ppg: 28.9,
-      rpg: 13.4,
-      apg: 4.2,
-      position: "C",
-      trend: "+3.2",
-    },
-    {
-      name: "Cade Cunningham",
-      team: "DET",
-      ppg: 27.5,
-      rpg: 6.2,
-      apg: 9.4,
-      position: "G",
-      trend: "+2.1",
-    },
-    {
-      name: "Luka Dončić",
-      team: "DAL",
-      ppg: 33.8,
-      rpg: 9.1,
-      apg: 9.5,
-      position: "G",
-      trend: "-0.5",
-    },
-    {
-      name: "Anthony Edwards",
-      team: "MIN",
-      ppg: 31.2,
-      rpg: 5.8,
-      apg: 5.2,
-      position: "G",
-      trend: "+1.8",
-    },
-    {
-      name: "Nikola Jokić",
-      team: "DEN",
-      ppg: 26.4,
-      rpg: 12.1,
-      apg: 11.5,
-      position: "C",
-      trend: "0.0",
-    },
-  ];
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getPlayers();
+        setPlayers(data);
+      } catch (error) {
+        console.error("Failed to fetch players:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const filteredPlayers = Array.isArray(players) ? players.filter(
+    (player) =>
+      player.PLAYER_NAME?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      player.TEAM_ABBREVIATION?.toLowerCase().includes(searchQuery.toLowerCase()),
+  ) : [];
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <nav className="border-b border-neon-green/20 backdrop-blur-sm bg-black/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-white hover:text-neon-green transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Home</span>
-            </Link>
-            <div className="flex gap-6">
-              <Link
-                href="/predictions"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Predictions
-              </Link>
-              <Link
-                href="/teams"
-                className="text-white/80 hover:text-neon-green transition-colors"
-              >
-                Teams
-              </Link>
-              <Link href="/players" className="text-neon-green font-semibold">
-                Players
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">NBA Players</h1>
-          <p className="text-gray-400 text-lg">
-            Search for players and view their statistics and performance
-            predictions.
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Player Stats</h1>
+          <p className="text-muted-foreground mt-2">
+            Comprehensive player metrics and performance analysis.
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+        <div className="flex gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search for a player..."
+              placeholder="Search players..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-neon-green transition-colors"
+              className="pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full md:w-64 text-foreground placeholder-muted-foreground"
             />
           </div>
+          <button className="p-2 bg-card border border-border rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+            <Filter className="h-5 w-5" />
+          </button>
         </div>
+      </div>
 
-        {/* Players Table */}
-        <div className="bg-gray-900/50 backdrop-blur-sm border border-neon-green/20 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-black/50 border-b border-white/10">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-secondary/50 border-b border-border">
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  Player
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  Team
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  PTS
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  REB
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  AST
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  Efficiency
+                </th>
+                <th className="p-4 font-semibold text-sm text-foreground">
+                  Trend
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {loading ? (
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                    Player
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                    Team
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                    Position
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">
-                    PPG
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">
-                    RPG
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">
-                    APG
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">
-                    Action
-                  </th>
+                   <td colSpan={7} className="p-8 text-center text-muted-foreground">Loading players...</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {players.map((player) => (
-                  <tr
-                    key={player.name}
-                    className="hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-neon-green/20 flex items-center justify-center border border-neon-green/50">
-                          <User className="h-5 w-5 text-neon-green" />
-                        </div>
-                        <span className="text-white font-medium">
-                          {player.name}
-                        </span>
+              ) : filteredPlayers.map((player) => (
+                <tr key={player.PLAYER_ID} className="hover:bg-secondary/20 transition-colors group">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary">
+                        <User className="h-5 w-5" />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-400">{player.team}</td>
-                    <td className="px-6 py-4 text-gray-400">
-                      {player.position}
-                    </td>
-                    <td className="px-6 py-4 text-right text-white font-semibold">
-                      {player.ppg}
-                    </td>
-                    <td className="px-6 py-4 text-right text-white font-semibold">
-                      {player.rpg}
-                    </td>
-                    <td className="px-6 py-4 text-right text-white font-semibold">
-                      {player.apg}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-4">
-                        <span
-                          className={`text-xs font-medium ${
-                            parseFloat(player.trend) > 0
-                              ? "text-neon-green"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {player.trend} Last 5
-                        </span>
-                        <button className="text-neon-green hover:text-green-400 flex items-center gap-1 transition-colors">
-                          <TrendingUp className="h-4 w-4" />
-                          <span className="text-sm">Predict</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <span className="font-medium text-foreground group-hover:text-primary transition-colors">{player.PLAYER_NAME}</span>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span className="px-2 py-1 bg-secondary rounded text-xs font-mono text-muted-foreground">{player.TEAM_ABBREVIATION}</span>
+                  </td>
+                  <td className="p-4 font-bold text-foreground">{player.PTS}</td>
+                  <td className="p-4 text-muted-foreground">{player.REB}</td>
+                  <td className="p-4 text-muted-foreground">{player.AST}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                       <span className="text-sm font-medium text-foreground">{(player.FG_PCT * 100).toFixed(1)}%</span>
+                       <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-blue-500 rounded-full" 
+                           style={{ width: `${player.FG_PCT * 100}%` }} 
+                         />
+                       </div>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <Zap className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -13,14 +13,13 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadUser = async () => {
+      const currentUser = await getUser();
+      setUser(currentUser);
+      setLoading(false);
+    };
     loadUser();
   }, []);
-
-  const loadUser = async () => {
-    const currentUser = await getUser();
-    setUser(currentUser);
-    setLoading(false);
-  };
 
   const handleSignOut = async () => {
     await signOut();

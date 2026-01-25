@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.routes import predict
+from app.routes import predict, standings, players
 
 # Load environment variables
 load_dotenv()
@@ -27,6 +27,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(predict.router, prefix="/api/v1", tags=["predictions"])
+app.include_router(standings.router, prefix="/api/v1", tags=["standings"])
+app.include_router(players.router, prefix="/api/v1", tags=["players"])
 
 
 @app.get("/")

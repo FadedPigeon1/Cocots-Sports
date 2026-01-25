@@ -15,20 +15,19 @@ export default function ProtectedRoute({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const currentUser = await getUser();
+
+      if (!currentUser) {
+        router.push("/login");
+      } else {
+        setUser(currentUser);
+      }
+
+      setLoading(false);
+    };
     checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const currentUser = await getUser();
-
-    if (!currentUser) {
-      router.push("/login");
-    } else {
-      setUser(currentUser);
-    }
-
-    setLoading(false);
-  };
+  }, [router]);
 
   if (loading) {
     return (

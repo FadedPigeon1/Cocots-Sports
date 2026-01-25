@@ -3,7 +3,14 @@ from datetime import datetime
 
 from app.schemas.predict_request import GamePredictionRequest, PlayerStatsRequest
 from app.schemas.predict_response import GamePredictionResponse, PlayerStatsResponse
-from app.services.data_fetcher import fetch_game_data, fetch_player_stats, get_all_nba_teams, find_player_by_name, get_recent_games
+from app.services.data_fetcher import (
+    fetch_game_data,
+    fetch_player_stats,
+    get_all_nba_teams,
+    find_player_by_name,
+    get_recent_games,
+    get_team_details
+)
 from app.services.feature_engineering import prepare_game_features, prepare_player_features
 from app.services.model_loder import ModelLoader
 
@@ -186,4 +193,18 @@ async def get_standings(season: str = "2025-26"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch standings: {str(e)}"
+        ) from e
+
+
+@router.get("/team/{team_id}")
+async def get_team_details_endpoint(team_id: str, season: str = "2025-26"):
+    """Get detailed stats for a specific team"""
+    try:
+        team_data = await get_team_details(int(team_id), season)
+
+        return team_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch team details: {str(e)}"
         ) from e

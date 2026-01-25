@@ -1,164 +1,164 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
-  BarChart3,
-  Activity,
-  Calendar,
+  Trophy,
   TrendingUp,
+  Users,
+  Target,
+  ArrowUpRight,
+  TrendingDown,
 } from "lucide-react";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import TeamTracker from "@/components/TeamTracker";
 
-export default function DashboardPage() {
+export default function Dashboard() {
+  const [stats, setStats] = useState({
+    activePredictions: 12,
+    successRate: 78,
+    trackedTeams: 5,
+    recentWins: 8,
+  });
+
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-black text-white">
-        {/* Navigation */}
-        <nav className="border-b border-neon-green/20 backdrop-blur-sm bg-black/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-              <Link
-                href="/"
-                className="flex items-center gap-2 text-white hover:text-neon-green transition-colors"
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Welcome back to your sports analytics command center.
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium">
+            Download Report
+          </button>
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+            New Prediction
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Target className="h-6 w-6" />
+            </div>
+            <span className="flex items-center text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded-full">
+              +12% <ArrowUpRight className="h-3 w-3 ml-1" />
+            </span>
+          </div>
+          <h3 className="text-2xl font-bold text-foreground">
+            {stats.activePredictions}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Active Predictions
+          </p>
+        </div>
+
+        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <TrendingUp className="h-6 w-6" />
+            </div>
+            <span className="flex items-center text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded-full">
+              +4.5% <ArrowUpRight className="h-3 w-3 ml-1" />
+            </span>
+          </div>
+          <h3 className="text-2xl font-bold text-foreground">
+            {stats.successRate}%
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">Success Rate</p>
+        </div>
+
+        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Users className="h-6 w-6" />
+            </div>
+            <span className="flex items-center text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-full">
+              0% --
+            </span>
+          </div>
+          <h3 className="text-2xl font-bold text-foreground">
+            {stats.trackedTeams}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">Tracked Teams</p>
+        </div>
+
+        <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Trophy className="h-6 w-6" />
+            </div>
+            <span className="flex items-center text-xs font-medium text-red-500 bg-red-500/10 px-2 py-1 rounded-full">
+              -2% <TrendingDown className="h-3 w-3 ml-1" />
+            </span>
+          </div>
+          <h3 className="text-2xl font-bold text-foreground">
+            {stats.recentWins}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">Recent Wins</p>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-lg font-bold text-foreground mb-4">
+            Recent Predictions
+          </h3>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
               >
-                <ArrowLeft className="h-5 w-5" />
-                <span>Back to Home</span>
-              </Link>
-              <div className="flex gap-6">
-                <Link
-                  href="/predictions"
-                  className="text-white/80 hover:text-neon-green transition-colors"
-                >
-                  Predictions
-                </Link>
-                <Link
-                  href="/teams"
-                  className="text-white/80 hover:text-neon-green transition-colors"
-                >
-                  Teams
-                </Link>
-                <Link
-                  href="/players"
-                  className="text-white/80 hover:text-neon-green transition-colors"
-                >
-                  Players
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Team <span className="text-neon-green">Tracker</span>
-            </h1>
-            <p className="text-gray-400 text-lg">
-              Monitor real-time performance and historical trends.
-            </p>
-          </div>
-
-          {/* Main Tracker Component */}
-          <div className="mb-8">
-            <TeamTracker />
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium">Total Predictions</h3>
-                <BarChart3 className="h-8 w-8 text-blue-500" />
-              </div>
-              <p className="text-3xl font-bold text-white mb-2">1,247</p>
-              <p className="text-neon-green text-sm">↑ 12% from last week</p>
-            </div>
-
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium">Accuracy Rate</h3>
-                <TrendingUp className="h-8 w-8 text-neon-green" />
-              </div>
-              <p className="text-3xl font-bold text-white mb-2">85.3%</p>
-              <p className="text-neon-green text-sm">↑ 2.1% improvement</p>
-            </div>
-
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium">Games Today</h3>
-                <Calendar className="h-8 w-8 text-orange-500" />
-              </div>
-              <p className="text-3xl font-bold text-white mb-2">12</p>
-              <p className="text-gray-500 text-sm">Across both conferences</p>
-            </div>
-
-            <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 hover:border-neon-green/50 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-400 font-medium">Active Users</h3>
-                <Activity className="h-8 w-8 text-purple-500" />
-              </div>
-              <p className="text-3xl font-bold text-white mb-2">3,542</p>
-              <p className="text-neon-green text-sm">↑ 8% this month</p>
-            </div>
-          </div>
-
-          {/* Recent Predictions */}
-          <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-6">
-              Recent Predictions
-            </h2>
-
-            <div className="space-y-4">
-              {[
-                {
-                  home: "Lakers",
-                  away: "Warriors",
-                  prediction: "Lakers Win",
-                  confidence: 78,
-                  time: "2 hours ago",
-                },
-                {
-                  home: "Celtics",
-                  away: "Heat",
-                  prediction: "Celtics Win",
-                  confidence: 85,
-                  time: "5 hours ago",
-                },
-                {
-                  home: "Bucks",
-                  away: "Nets",
-                  prediction: "Bucks Win",
-                  confidence: 72,
-                  time: "1 day ago",
-                },
-              ].map((pred, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-4 bg-black/40 rounded-lg border border-white/10 hover:border-neon-green/30 transition-colors"
-                >
-                  <div>
-                    <p className="text-white font-medium">
-                      {pred.home} vs {pred.away}
-                    </p>
-                    <p className="text-gray-500 text-sm">{pred.time}</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+                    <span className="font-bold text-xs">LAL</span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-white font-semibold">
-                      {pred.prediction}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Lakers vs Warriors
                     </p>
-                    <p className="text-neon-green text-sm">
-                      {pred.confidence}% confidence
+                    <p className="text-xs text-muted-foreground">
+                      Today, 7:00 PM
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <span className="text-sm font-medium text-primary">
+                  Win (65%)
+                </span>
+              </div>
+            ))}
           </div>
-        </main>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-lg font-bold text-foreground mb-4">
+            Team Updates
+          </h3>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+              >
+                <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+                <div>
+                  <p className="text-sm text-foreground">
+                    LeBron James listed as questionable for tonight&apos;s game.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    2 hours ago
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

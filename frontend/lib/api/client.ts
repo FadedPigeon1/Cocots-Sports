@@ -43,4 +43,14 @@ mlApi.interceptors.response.use(
   }
 )
 
+export const getStandings = async () => {
+    const response = await mlApi.get('/standings');
+    return response.data;
+}
+
+export const getPlayers = async () => {
+    const response = await mlApi.get('/players');
+    return response.data;
+}
+
 export default mlApi
