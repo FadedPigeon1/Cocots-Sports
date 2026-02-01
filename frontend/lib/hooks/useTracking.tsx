@@ -9,7 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export interface TrackedTeam {
   id: string;
@@ -106,26 +106,28 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
     // Set up the listener immediately
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+    } = supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session: Session | null) => {
+        if (!mounted) return;
 
-      const currentUser = session?.user ?? null;
+        const currentUser = session?.user ?? null;
 
-      // Only update state if the user has actually changed to avoid unnecessary re-renders
-      // or if we are in the initial loading state
-      setUser(currentUser);
+        // Only update state if the user has actually changed to avoid unnecessary re-renders
+        // or if we are in the initial loading state
+        setUser(currentUser);
 
-      if (currentUser) {
-        await Promise.all([
-          loadTrackedTeams(currentUser.id),
-          loadTrackedPlayers(currentUser.id),
-        ]);
-      } else {
-        setTrackedTeams([]);
-        setTrackedPlayers([]);
-      }
-      setLoading(false);
-    });
+        if (currentUser) {
+          await Promise.all([
+            loadTrackedTeams(currentUser.id),
+            loadTrackedPlayers(currentUser.id),
+          ]);
+        } else {
+          setTrackedTeams([]);
+          setTrackedPlayers([]);
+        }
+        setLoading(false);
+      },
+    );
 
     return () => {
       mounted = false;

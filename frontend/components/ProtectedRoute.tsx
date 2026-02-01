@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export default function ProtectedRoute({
   children,
@@ -35,14 +35,16 @@ export default function ProtectedRoute({
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        router.push("/login");
-      } else if (session?.user) {
-        setUser(session.user);
-      }
-      setLoading(false);
-    });
+    } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (event === "SIGNED_OUT") {
+          router.push("/login");
+        } else if (session?.user) {
+          setUser(session.user);
+        }
+        setLoading(false);
+      },
+    );
 
     return () => subscription.unsubscribe();
   }, [router]);
