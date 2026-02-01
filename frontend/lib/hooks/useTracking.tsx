@@ -103,38 +103,16 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (mounted) {
-          const currentUser = session?.user ?? null;
-          setUser(currentUser);
-
-          if (currentUser) {
-            await Promise.all([
-              loadTrackedTeams(currentUser.id),
-              loadTrackedPlayers(currentUser.id),
-            ]);
-          }
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("Error initializing auth:", err);
-        if (mounted) setLoading(false);
-      }
-    };
-
-    initAuth();
-
+    // Set up the listener immediately
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
       const currentUser = session?.user ?? null;
+
+      // Only update state if the user has actually changed to avoid unnecessary re-renders
+      // or if we are in the initial loading state
       setUser(currentUser);
 
       if (currentUser) {
@@ -146,6 +124,7 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
         setTrackedTeams([]);
         setTrackedPlayers([]);
       }
+      setLoading(false);
     });
 
     return () => {

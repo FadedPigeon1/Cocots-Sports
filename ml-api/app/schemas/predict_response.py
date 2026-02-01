@@ -7,6 +7,8 @@ class GamePredictionResponse(BaseModel):
     """Response schema for game prediction"""
     home_team_id: int
     away_team_id: int
+    home_team_name: Optional[str] = None
+    away_team_name: Optional[str] = None
     home_win_probability: float = Field(..., ge=0.0, le=1.0,
                                         description="Probability of home team winning")
     away_win_probability: float = Field(..., ge=0.0, le=1.0,

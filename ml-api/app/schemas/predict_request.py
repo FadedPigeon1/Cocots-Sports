@@ -6,17 +6,20 @@ from typing import Optional
 class GamePredictionRequest(BaseModel):
     """Request schema for game prediction"""
     home_team_id: int = Field(...,
-                              description="NBA team ID for home team", ge=1, le=30)
+                              description="NBA team ID for home team")
     away_team_id: int = Field(...,
-                              description="NBA team ID for away team", ge=1, le=30)
+                              description="NBA team ID for away team")
     game_date: Optional[datetime] = Field(
         None, description="Date and time of the game (defaults to now)")
+    games_back: Optional[int] = Field(
+        3, description="Number of past games to use for analysis (3, 6, or 9)")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "home_team_id": 1,
-                "away_team_id": 2
+                "home_team_id": 1610612747,
+                "away_team_id": 1610612744,
+                "games_back": 3
             }
         }
 

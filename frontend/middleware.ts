@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
@@ -20,9 +20,13 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set(name, value)
           )
+          
+          // Create a new response with the updated cookies
+          // This is crucial for maintaining the cookie updates efficiently
           response = NextResponse.next({
             request,
           })
+          
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           )
@@ -31,7 +35,8 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  // This will refresh the session if needed
+  const { data: { user } } = await supabase.auth.getUser()
 
   return response
 }

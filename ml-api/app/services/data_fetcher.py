@@ -5,6 +5,71 @@ from nba_api.stats.static import teams, players
 import pandas as pd
 
 
+async def get_scheduled_games(date: datetime = None) -> List[Dict[str, Any]]:
+    """
+    Fetch scheduled NBA games for a specific date
+
+    Args:
+        date: Date to fetch games for (default: today)
+
+    Returns:
+        List of scheduled games with team info
+    """
+    if date is None:
+        date = datetime.now()
+
+    games_list = []
+    date_str = date.strftime('%m/%d/%Y')
+
+    try:
+        scoreboard = scoreboardv2.ScoreboardV2(game_date=date_str)
+        games_df = scoreboard.get_data_frames()[0]
+
+        if not games_df.empty:
+            # Process each game
+            for _, game in games_df.iterrows():
+                try:
+                    home_team_id = game['HOME_TEAM_ID']
+                    away_team_id = game['VISITOR_TEAM_ID']
+
+                    # Get team info
+                    home_team_info = teams.find_team_name_by_id(home_team_id)
+                    away_team_info = teams.find_team_name_by_id(away_team_id)
+
+                    # Fallback if find_team_name_by_id returns dict or similar
+                    home_name = home_team_info['full_name'] if isinstance(
+                        home_team_info, dict) else str(home_team_info)
+                    away_name = away_team_info['full_name'] if isinstance(
+                        away_team_info, dict) else str(away_team_info)
+
+                    # e.g., "7:30 pm ET"
+                    game_status_text = game['GAME_STATUS_TEXT']
+
+                    games_list.append({
+                        'game_id': game['GAME_ID'],
+                        'date': date.isoformat(),
+                        'status_text': game_status_text,
+                        'home_team': {
+                            'id': int(home_team_id),
+                            'name': home_name,
+                            'abbreviation': home_team_info['abbreviation'] if isinstance(home_team_info, dict) else ""
+                        },
+                        'away_team': {
+                            'id': int(away_team_id),
+                            'name': away_name,
+                            'abbreviation': away_team_info['abbreviation'] if isinstance(away_team_info, dict) else ""
+                        }
+                    })
+                except Exception as e:
+                    print(f"Error processing game {game.get('GAME_ID')}: {e}")
+                    continue
+
+        return games_list
+    except Exception as e:
+        print(f"Error in get_scheduled_games: {e}")
+        return []
+
+
 async def get_recent_games(days_back: int = 3) -> List[Dict[str, Any]]:
     """
     Fetch recent NBA games from the last N days

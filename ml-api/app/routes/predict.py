@@ -9,13 +9,75 @@ from app.services.data_fetcher import (
     get_all_nba_teams,
     find_player_by_name,
     get_recent_games,
-    get_team_details
+    get_team_details,
+    get_scheduled_games
 )
 from app.services.feature_engineering import prepare_game_features, prepare_player_features
 from app.services.model_loder import ModelLoader
+from typing import List, Optional
 
 router = APIRouter()
 model_loader = ModelLoader()
+
+
+@router.get("/predict/daily", response_model=List[GamePredictionResponse])
+async def predict_daily_games(date: Optional[str] = None):
+    """
+    Get predictions for all scheduled games on a specific date
+    """
+    try:
+        # Parse date
+        target_date = datetime.now()
+        if date:
+            try:
+                target_date = datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                raise HTTPException(
+                    status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+        # Get scheduled games
+        games = await get_scheduled_games(target_date)
+        predictions = []
+
+        for game in games:
+            try:
+                home_id = game['home_team']['id']
+                away_id = game['away_team']['id']
+
+                # Fetch data for prediction
+                home_data = await fetch_game_data(home_id, target_date)
+                away_data = await fetch_game_data(away_id, target_date)
+
+                # Predict
+                features = prepare_game_features(home_data, away_data)
+                model = model_loader.get_game_prediction_model()
+                probs = model.predict_proba(features)
+
+                home_win_prob = float(probs[0][1])
+                away_win_prob = float(probs[0][0])
+
+                predictions.append(GamePredictionResponse(
+                    home_team_id=home_id,
+                    away_team_id=away_id,
+                    home_team_name=game['home_team']['name'],
+                    away_team_name=game['away_team']['name'],
+                    home_win_probability=home_win_prob,
+                    away_win_probability=away_win_prob,
+                    predicted_home_score=None,
+                    predicted_away_score=None,
+                    confidence=max(home_win_prob, away_win_prob),
+                    timestamp=datetime.utcnow()
+                ))
+            except Exception as e:
+                print(f"Prediction failed for game {game['game_id']}: {e}")
+                # Fallback or skip
+                continue
+
+        return predictions
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Daily predictions failed: {str(e)}")
 
 
 @router.post("/predict/game", response_model=GamePredictionResponse)
@@ -32,10 +94,11 @@ async def predict_game(request: GamePredictionRequest):
     try:
         # Use current date if not provided
         game_date = request.game_date or datetime.utcnow()
+        games_back = request.games_back or 3
 
         # Fetch historical game data for both teams (current season + year ago)
-        home_data = await fetch_game_data(request.home_team_id, game_date)
-        away_data = await fetch_game_data(request.away_team_id, game_date)
+        home_data = await fetch_game_data(request.home_team_id, game_date, games_back=games_back)
+        away_data = await fetch_game_data(request.away_team_id, game_date, games_back=games_back)
 
         # Prepare features for the model
         features = prepare_game_features(home_data, away_data)
@@ -44,14 +107,34 @@ async def predict_game(request: GamePredictionRequest):
         model = model_loader.get_game_prediction_model()
         prediction = model.predict_proba(features)
 
+        # Get team details for name response
+        try:
+            home_info = await get_team_details(request.home_team_id)
+            home_name = home_info.get('team', {}).get(
+                'team_name', f"Team {request.home_team_id}")
+        except Exception:
+            home_name = f"Team {request.home_team_id}"
+
+        try:
+            away_info = await get_team_details(request.away_team_id)
+            away_name = away_info.get('team', {}).get(
+                'team_name', f"Team {request.away_team_id}")
+        except Exception:
+            away_name = f"Team {request.away_team_id}"
+
+        home_prob = float(prediction[0][1])
+        away_prob = float(prediction[0][0])
+
         return GamePredictionResponse(
             home_team_id=request.home_team_id,
             away_team_id=request.away_team_id,
-            home_win_probability=float(prediction[0][1]),
-            away_win_probability=float(prediction[0][0]),
+            home_team_name=home_name,
+            away_team_name=away_name,
+            home_win_probability=home_prob,
+            away_win_probability=away_prob,
             predicted_home_score=None,  # Implement if you have a regression model
             predicted_away_score=None,
-            confidence=float(max(prediction[0])),
+            confidence=float(max(home_prob, away_prob)),
             timestamp=datetime.utcnow()
         )
 
@@ -60,6 +143,12 @@ async def predict_game(request: GamePredictionRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}"
         )
+
+
+@router.get("/predict/teams")
+async def get_all_teams_endpoint():
+    """Get all NBA teams"""
+    return get_all_nba_teams()
 
 
 @router.post("/predict/player", response_model=PlayerStatsResponse)
@@ -102,7 +191,7 @@ async def predict_player_stats(request: PlayerStatsRequest):
 
 
 @router.get("/teams")
-async def get_teams():
+async def get_teams_legacy():
     """Get list of all NBA teams from nba_api"""
     try:
         all_teams = get_all_nba_teams()

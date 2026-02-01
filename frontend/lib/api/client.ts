@@ -29,6 +29,12 @@ mlApi.interceptors.request.use(
 mlApi.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Suppress console error for expected connection issues (like during local dev when backend is off)
+    if (error.code === 'ECONNABORTED' || error.message.includes('Network Error')) {
+        // Just reject, let the caller handle the fallback
+        return Promise.reject(error)
+    }
+
     if (error.response) {
       // Server responded with error status
       console.error('API Error:', error.response.data)

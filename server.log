@@ -1,0 +1,97 @@
+INFO:     Will watch for changes in these directories: ['/Users/franciscotorres/Documents/Cocots-Sports/ml-api']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [44619] using WatchFiles
+INFO:     Started server process [44680]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error loading XGBoost model: [22:08:09] /Users/runner/work/xgboost/xgboost/src/c_api/c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `/Users/franciscotorres/Documents/Cocots-Sports/ml-api/app/services/../models/xgboost_model.json`.
+Stack trace:
+  [bt] (0) 1   libxgboost.dylib                    0x00000001114c0fec dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   libxgboost.dylib                    0x00000001115508dc XGBoosterLoadModel::$_4::operator()() const + 440
+  [bt] (2) 3   libxgboost.dylib                    0x0000000111550170 XGBoosterLoadModel + 824
+  [bt] (3) 4   libffi.dylib                        0x000000019c840050 ffi_call_SYSV + 80
+  [bt] (4) 5   libffi.dylib                        0x000000019c849604 ffi_call_int + 1220
+  [bt] (5) 6   _ctypes.cpython-313-darwin.so       0x00000001084478f8 _ctypes_callproc + 1068
+  [bt] (6) 7   _ctypes.cpython-313-darwin.so       0x000000010843d960 PyCFuncPtr_call + 260
+  [bt] (7) 8   Python                              0x000000010359d440 _PyEval_EvalFrameDefault + 41924
+  [bt] (8) 9   Python                              0x0000000103414f28 gen_send_ex2 + 196
+
+
+INFO:     127.0.0.1:49984 - "GET /api/v1/predict/daily HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/services/model_loder.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [44680]
+INFO:     Started server process [44949]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error loading XGBoost model: [22:11:08] /Users/runner/work/xgboost/xgboost/src/c_api/c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `/Users/franciscotorres/Documents/Cocots-Sports/ml-api/app/services/../models/xgboost_model.json`.
+Stack trace:
+  [bt] (0) 1   libxgboost.dylib                    0x000000011370cfec dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   libxgboost.dylib                    0x000000011379c8dc XGBoosterLoadModel::$_4::operator()() const + 440
+  [bt] (2) 3   libxgboost.dylib                    0x000000011379c170 XGBoosterLoadModel + 824
+  [bt] (3) 4   libffi.dylib                        0x000000019c840050 ffi_call_SYSV + 80
+  [bt] (4) 5   libffi.dylib                        0x000000019c849604 ffi_call_int + 1220
+  [bt] (5) 6   _ctypes.cpython-313-darwin.so       0x000000010ad0b8f8 _ctypes_callproc + 1068
+  [bt] (6) 7   _ctypes.cpython-313-darwin.so       0x000000010ad01960 PyCFuncPtr_call + 260
+  [bt] (7) 8   Python                              0x0000000105819440 _PyEval_EvalFrameDefault + 41924
+  [bt] (8) 9   Python                              0x0000000105690f28 gen_send_ex2 + 196
+
+
+INFO:     127.0.0.1:50008 - "GET /api/v1/predict/daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50009 - "GET /api/v1/predict/teams HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50013 - "OPTIONS /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50013 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50024 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50027 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/routes/predict.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [44949]
+INFO:     Started server process [45412]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error loading XGBoost model: [22:15:26] /Users/runner/work/xgboost/xgboost/src/c_api/c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `/Users/franciscotorres/Documents/Cocots-Sports/ml-api/app/services/../models/xgboost_model.json`.
+Stack trace:
+  [bt] (0) 1   libxgboost.dylib                    0x00000001117c4fec dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   libxgboost.dylib                    0x00000001118548dc XGBoosterLoadModel::$_4::operator()() const + 440
+  [bt] (2) 3   libxgboost.dylib                    0x0000000111854170 XGBoosterLoadModel + 824
+  [bt] (3) 4   libffi.dylib                        0x000000019c840050 ffi_call_SYSV + 80
+  [bt] (4) 5   libffi.dylib                        0x000000019c849604 ffi_call_int + 1220
+  [bt] (5) 6   _ctypes.cpython-313-darwin.so       0x000000010874b8f8 _ctypes_callproc + 1068
+  [bt] (6) 7   _ctypes.cpython-313-darwin.so       0x0000000108741960 PyCFuncPtr_call + 260
+  [bt] (7) 8   Python                              0x00000001038a1440 _PyEval_EvalFrameDefault + 41924
+  [bt] (8) 9   Python                              0x0000000103718f28 gen_send_ex2 + 196
+
+
+INFO:     127.0.0.1:50049 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/routes/predict.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [45412]
+INFO:     Started server process [45835]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error loading XGBoost model: [22:16:14] /Users/runner/work/xgboost/xgboost/src/c_api/c_api.cc:1529: Check failed: str.size() >= 2 (0 vs. 2) : Invalid model format in: `/Users/franciscotorres/Documents/Cocots-Sports/ml-api/app/services/../models/xgboost_model.json`.
+Stack trace:
+  [bt] (0) 1   libxgboost.dylib                    0x00000001130c4fec dmlc::LogMessageFatal::~LogMessageFatal() + 124
+  [bt] (1) 2   libxgboost.dylib                    0x00000001131548dc XGBoosterLoadModel::$_4::operator()() const + 440
+  [bt] (2) 3   libxgboost.dylib                    0x0000000113154170 XGBoosterLoadModel + 824
+  [bt] (3) 4   libffi.dylib                        0x000000019c840050 ffi_call_SYSV + 80
+  [bt] (4) 5   libffi.dylib                        0x000000019c849604 ffi_call_int + 1220
+  [bt] (5) 6   _ctypes.cpython-313-darwin.so       0x000000010a6af8f8 _ctypes_callproc + 1068
+  [bt] (6) 7   _ctypes.cpython-313-darwin.so       0x000000010a6a5960 PyCFuncPtr_call + 260
+  [bt] (7) 8   Python                              0x00000001051d5440 _PyEval_EvalFrameDefault + 41924
+  [bt] (8) 9   Python                              0x000000010504cf28 gen_send_ex2 + 196
+
+
+INFO:     127.0.0.1:50058 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "POST /api/v1/predict/game HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "GET /api/v1/compare/teams?team_ids=1610612760,1610612759,1610612765&season=2025-26 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50072 - "GET /api/v1/compare/teams?team_ids=1610612760,1610612759,1610612765&season=2025-26 HTTP/1.1" 200 OK
