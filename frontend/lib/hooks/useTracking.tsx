@@ -64,14 +64,18 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
 
   const loadTrackedTeams = useCallback(
     async (userId: string) => {
-      const { data, error } = await supabase
-        .from("tracked_teams")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("tracked_teams")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setTrackedTeams(data);
+        if (!error && data) {
+          setTrackedTeams(data);
+        }
+      } catch (err) {
+        console.error("Error loading tracked teams:", err);
       }
     },
     [supabase],
@@ -79,42 +83,57 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
 
   const loadTrackedPlayers = useCallback(
     async (userId: string) => {
-      const { data, error } = await supabase
-        .from("tracked_players")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("tracked_players")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setTrackedPlayers(data);
+        if (!error && data) {
+          setTrackedPlayers(data);
+        }
+      } catch (err) {
+        console.error("Error loading tracked players:", err);
       }
     },
     [supabase],
   );
 
-  // Load user and tracked items on mount
   useEffect(() => {
-    const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+    let mounted = true;
 
-      if (user) {
-        await Promise.all([
-          loadTrackedTeams(user.id),
-          loadTrackedPlayers(user.id),
-        ]);
+    const initAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (mounted) {
+          const currentUser = session?.user ?? null;
+          setUser(currentUser);
+
+          if (currentUser) {
+            await Promise.all([
+              loadTrackedTeams(currentUser.id),
+              loadTrackedPlayers(currentUser.id),
+            ]);
+          }
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error initializing auth:", err);
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     };
 
-    loadData();
+    initAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       const currentUser = session?.user ?? null;
       setUser(currentUser);
 
@@ -129,7 +148,10 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase, loadTrackedTeams, loadTrackedPlayers]);
 
   const trackTeam = useCallback(
@@ -174,11 +196,7 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   );
 
   const trackPlayer = useCallback(
-    async (
-      playerId: number,
-      playerName: string,
-      teamAbbreviation: string,
-    ) => {
+    async (playerId: number, playerName: string, teamAbbreviation: string) => {
       if (!user) return { data: null, error: "Not authenticated" };
 
       const { data, error } = await supabase
@@ -221,16 +239,12 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   );
 
   const isTeamTracked = useCallback(
-    (teamId: number) => {
-      return trackedTeams.some((t) => t.team_id === teamId);
-    },
+    (teamId: number) => trackedTeams.some((t) => t.team_id === teamId),
     [trackedTeams],
   );
 
   const isPlayerTracked = useCallback(
-    (playerId: number) => {
-      return trackedPlayers.some((p) => p.player_id === playerId);
-    },
+    (playerId: number) => trackedPlayers.some((p) => p.player_id === playerId),
     [trackedPlayers],
   );
 

@@ -28,14 +28,12 @@ export default function SignUpPage() {
     setSuccess(false);
     setLoading(true);
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
-    // Validate password strength
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       setLoading(false);
@@ -97,51 +95,69 @@ export default function SignUpPage() {
 
           <form onSubmit={handleSignUp} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-foreground"
+              >
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
+                  autoComplete="email"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg pl-10 pr-4 py-3 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-foreground"
+              >
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
+                  id="password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoComplete="new-password"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg pl-10 pr-4 py-3 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-foreground"
+              >
                 Confirm Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
+                  id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoComplete="new-password"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg pl-10 pr-4 py-3 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 />
               </div>

@@ -430,8 +430,13 @@ export default function TeamComparison() {
 
               {/* Season Selector */}
               <div className="min-w-[140px]">
+                <label htmlFor="season-selector" className="sr-only">
+                  Select Season
+                </label>
                 <div className="relative">
                   <select
+                    id="season-selector"
+                    name="season"
                     value={season}
                     onChange={(e) => setSeason(e.target.value)}
                     className="w-full appearance-none bg-secondary/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
@@ -783,11 +788,16 @@ export default function TeamComparison() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Team Selection */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label
+                  htmlFor="history-team-selector"
+                  className="block text-sm font-medium text-foreground mb-2"
+                >
                   Select Team
                 </label>
                 <div className="relative">
                   <select
+                    id="history-team-selector"
+                    name="historyTeam"
                     value={historyTeam || ""}
                     onChange={(e) =>
                       setHistoryTeam(

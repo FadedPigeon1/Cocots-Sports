@@ -22,16 +22,26 @@ export default function LoginPage() {
       const { data, error: signInError } = await signIn(email, password);
 
       if (signInError) {
-        setError(signInError.message);
+        if (signInError.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password.");
+        } else if (signInError.message.includes("Email not confirmed")) {
+          setError("Please verify your email address.");
+        } else {
+          setError(signInError.message);
+        }
         setLoading(false);
-      } else if (data.session) {
-        // Small delay to ensure cookies are set before navigation
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        return;
+      }
+
+      if (data.session) {
         router.push("/dashboard");
         router.refresh();
+      } else {
+        setError("Sign in failed. Please try again.");
+        setLoading(false);
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred.");
       setLoading(false);
     }
   };
@@ -66,34 +76,46 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-foreground"
+              >
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
+                  autoComplete="email"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg pl-10 pr-4 py-3 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-foreground"
+              >
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <input
+                  id="password"
+                  name="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoComplete="current-password"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg pl-10 pr-4 py-3 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
                 />
               </div>

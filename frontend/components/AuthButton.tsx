@@ -13,11 +13,8 @@ import {
   Settings,
 } from "lucide-react";
 import { signOut } from "@/lib/supabase/auth";
-import { createClient } from "@/lib/supabase/client";
 import { useTracking } from "@/lib/hooks/useTracking";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-// Helper to get logo URL
 const getTeamLogo = (teamId: string) => {
   return `https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`;
 };
@@ -28,7 +25,6 @@ export default function AuthButton() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { trackedTeams, trackedPlayers, user, loading } = useTracking();
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -46,12 +42,11 @@ export default function AuthButton() {
   const handleSignOut = async () => {
     try {
       await signOut();
-    } catch (error) {
-      console.error("Error signing out:", error);
-    } finally {
       setDropdownOpen(false);
       router.push("/");
       router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
@@ -83,10 +78,8 @@ export default function AuthButton() {
           />
         </button>
 
-        {/* Dropdown Menu */}
         {dropdownOpen && (
           <div className="absolute right-0 top-full mt-2 w-80 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* User Info */}
             <div className="p-4 border-b border-border bg-secondary/30">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -103,7 +96,6 @@ export default function AuthButton() {
               </div>
             </div>
 
-            {/* Tracked Teams */}
             <div className="p-3 border-b border-border">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -156,7 +148,6 @@ export default function AuthButton() {
               )}
             </div>
 
-            {/* Tracked Players */}
             <div className="p-3 border-b border-border">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -204,7 +195,6 @@ export default function AuthButton() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="p-2">
               <Link
                 href="/dashboard"
