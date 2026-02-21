@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from app.services.data_fetcher import (
     get_player_season_stats,
     get_team_season_stats,
@@ -30,11 +30,11 @@ async def compare_players_endpoint(
 
         comparison = await compare_players(ids, season)
         return comparison
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
-            status_code=400, detail="Invalid player IDs format")
+            status_code=400, detail="Invalid player IDs format") from exc
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/compare/teams")
@@ -55,10 +55,11 @@ async def compare_teams_endpoint(
 
         comparison = await compare_teams(ids, season)
         return comparison
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid team IDs format")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail="Invalid team IDs format") from exc
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/player/{player_id}/history")
@@ -66,7 +67,7 @@ async def get_player_history(
     player_id: int,
     seasons: str = Query(
         None, description="Comma-separated seasons to compare (e.g., 2023-24,2024-25,2025-26)")
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """
     Get a player's historical statistics across multiple seasons for self-comparison
     """
@@ -80,7 +81,7 @@ async def get_player_history(
         history = await get_player_historical_comparison(player_id, season_list)
         return history
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/team/{team_id}/history")
@@ -88,7 +89,7 @@ async def get_team_history(
     team_id: int,
     seasons: str = Query(
         None, description="Comma-separated seasons to compare (e.g., 2015-16,2021-22,2025-26)")
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """
     Get a team's historical statistics across multiple seasons for self-comparison
     (e.g., 2016 Warriors vs 2022 Warriors)
@@ -103,7 +104,7 @@ async def get_team_history(
         history = await get_team_historical_comparison(team_id, season_list)
         return history
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/player/{player_id}/seasons")
@@ -115,7 +116,7 @@ async def get_player_available_seasons(player_id: int) -> Dict[str, Any]:
         seasons = await get_player_season_stats(player_id)
         return {"player_id": player_id, "available_seasons": seasons}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/team/{team_id}/seasons")
@@ -127,4 +128,4 @@ async def get_team_available_seasons(team_id: int) -> Dict[str, Any]:
         seasons = await get_team_season_stats(team_id)
         return {"team_id": team_id, "available_seasons": seasons}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

@@ -1,6 +1,6 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/ml-api/venv/bin/python",
-  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvironment": false,
   "python.analysis.diagnosticMode": "workspace",
   "python.languageServer": "Pylance",
   "python.analysis.extraPaths": [
