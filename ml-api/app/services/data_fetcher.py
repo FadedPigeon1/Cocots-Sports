@@ -1,11 +1,11 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from nba_api.stats.endpoints import TeamGameLog, PlayerGameLog, CommonTeamRoster, leaguedashteamstats, leaguedashplayerstats, scoreboardv2, commonplayerinfo
 from nba_api.stats.static import teams, players
 import pandas as pd
 
 
-async def get_scheduled_games(date: datetime = None) -> List[Dict[str, Any]]:
+async def get_scheduled_games(date: Optional[datetime] = None) -> List[Dict[str, Any]]:
     """
     Fetch scheduled NBA games for a specific date
 
@@ -655,7 +655,7 @@ def find_player_by_name(player_name: str) -> List[Dict[str, Any]]:
         return []
 
 
-async def get_player_details(player_id: int, season: str = "2025-26") -> Dict[str, Any]:
+async def get_player_details(player_id: int, season: str = "2025-26") -> Optional[Dict[str, Any]]:
     """
     Fetch detailed statistics for a specific player
     """
@@ -953,7 +953,7 @@ async def compare_teams(team_ids: List[int], season: str = "2025-26") -> Dict[st
         return {'teams': [], 'comparison_data': [], 'season': season}
 
 
-async def get_player_historical_comparison(player_id: int, seasons: List[str]) -> Dict[str, Any]:
+async def get_player_historical_comparison(player_id: int, seasons: List[str]) -> Optional[Dict[str, Any]]:
     """
     Get a player's statistics across multiple seasons for self-comparison
     """
@@ -1036,14 +1036,14 @@ async def get_player_historical_comparison(player_id: int, seasons: List[str]) -
         return None
 
 
-async def get_team_historical_comparison(team_id: int, seasons: List[str]) -> Dict[str, Any]:
+async def get_team_historical_comparison(team_id: int, seasons: List[str]) -> Optional[Dict[str, Any]]:
     """
     Get a team's statistics across multiple seasons for self-comparison
     (e.g., 2016 Warriors vs 2022 Warriors)
     """
     try:
         # Get team info
-        team_info = teams.find_team_by_id(team_id)
+        team_info = teams.find_team_name_by_id(team_id)
         if not team_info:
             return None
 

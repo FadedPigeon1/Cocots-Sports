@@ -1,11 +1,13 @@
 import asyncio
-from app.services.data_fetcher import get_current_standings, get_team_details, NBA_TEAM_IDS
+from app.services.data_fetcher import get_current_standings, get_team_details
 from nba_api.stats.static import teams
 
 
 async def main():
-    print(f"Total NBA Team IDs: {len(NBA_TEAM_IDS)}")
-    print(f"Sample IDs: {NBA_TEAM_IDS[:5]}")
+    nba_teams = teams.get_teams()
+    nba_team_ids = [team['id'] for team in nba_teams]
+    print(f"Total NBA Team IDs: {len(nba_team_ids)}")
+    print(f"Sample IDs: {nba_team_ids[:5]}")
 
     print("\n--- STANDINGS PREVIEW ---")
     standings = await get_current_standings()

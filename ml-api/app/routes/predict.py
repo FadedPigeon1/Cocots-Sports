@@ -179,6 +179,8 @@ async def predict_player_stats(request: PlayerStatsRequest):
             predicted_points=float(predictions[0][0]),
             predicted_rebounds=float(predictions[0][1]),
             predicted_assists=float(predictions[0][2]),
+            predicted_steals=0.0,  # Add actual prediction if available
+            predicted_blocks=0.0,  # Add actual prediction if available
             confidence=0.85,  # Calculate actual confidence
             timestamp=datetime.utcnow()
         )

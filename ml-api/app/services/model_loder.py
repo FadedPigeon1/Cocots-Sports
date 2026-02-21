@@ -62,7 +62,7 @@ class ModelLoader:
 
         return self._player_stats_model
 
-    def _load_xgboost_model(self, filename: str) -> xgb.Booster:
+    def _load_xgboost_model(self, filename: str) -> Any:
         """
         Load XGBoost model from JSON file
 
