@@ -1,76 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
-import { Plus, X, Trophy, TrendingUp, Activity, Target } from "lucide-react";
-
-// NBA Teams Data
-const EASTERN_CONFERENCE = [
-  { name: "Atlanta Hawks", id: "1610612737" },
-  { name: "Boston Celtics", id: "1610612738" },
-  { name: "Brooklyn Nets", id: "1610612751" },
-  { name: "Charlotte Hornets", id: "1610612766" },
-  { name: "Chicago Bulls", id: "1610612741" },
-  { name: "Cleveland Cavaliers", id: "1610612739" },
-  { name: "Detroit Pistons", id: "1610612765" },
-  { name: "Indiana Pacers", id: "1610612754" },
-  { name: "Miami Heat", id: "1610612748" },
-  { name: "Milwaukee Bucks", id: "1610612749" },
-  { name: "New York Knicks", id: "1610612752" },
-  { name: "Orlando Magic", id: "1610612753" },
-  { name: "Philadelphia 76ers", id: "1610612755" },
-  { name: "Toronto Raptors", id: "1610612761" },
-  { name: "Washington Wizards", id: "1610612764" },
-];
-
-const WESTERN_CONFERENCE = [
-  { name: "Dallas Mavericks", id: "1610612742" },
-  { name: "Denver Nuggets", id: "1610612743" },
-  { name: "Golden State Warriors", id: "1610612744" },
-  { name: "Houston Rockets", id: "1610612745" },
-  { name: "LA Clippers", id: "1610612746" },
-  { name: "LA Lakers", id: "1610612747" },
-  { name: "Memphis Grizzlies", id: "1610612763" },
-  { name: "Minnesota Timberwolves", id: "1610612750" },
-  { name: "New Orleans Pelicans", id: "1610612740" },
-  { name: "Oklahoma City Thunder", id: "1610612760" },
-  { name: "Phoenix Suns", id: "1610612756" },
-  { name: "Portland Trail Blazers", id: "1610612757" },
-  { name: "Sacramento Kings", id: "1610612758" },
-  { name: "San Antonio Spurs", id: "1610612759" },
-  { name: "Utah Jazz", id: "1610612762" },
-];
-
-const ALL_TEAMS = [...EASTERN_CONFERENCE, ...WESTERN_CONFERENCE];
-
-// Helper to get logo URL
-const getTeamLogo = (teamName: string) => {
-  const team = ALL_TEAMS.find(
-    (t) => t.name === teamName || t.name.includes(teamName)
-  );
-  if (team) {
-    return `https://cdn.nba.com/logos/nba/${team.id}/global/L/logo.svg`;
-  }
-  // Fallback for initial state or if not found (using Pistons as default/fallback)
-  return "https://cdn.nba.com/logos/nba/1610612765/global/L/logo.svg";
-};
+import TrackerHeader from "./team-tracker/TrackerHeader";
+import TrackerStats from "./team-tracker/TrackerStats";
+import TrackerCharts from "./team-tracker/TrackerCharts";
 
 // Mock data for win/loss trend
 const MOCK_DATA = [
@@ -91,7 +24,6 @@ const MOCK_HISTORICAL_DATA = [
   { game: 21, wins: 2, losses: 19, year: "2024" },
 ];
 
-// Mock data for comparison team (e.g., OKC Thunder)
 const MOCK_COMPARISON_DATA = [
   { game: 1, wins: 1, losses: 0, year: "2025" },
   { game: 5, wins: 5, losses: 0, year: "2025" },
@@ -101,7 +33,6 @@ const MOCK_COMPARISON_DATA = [
   { game: 21, wins: 20, losses: 1, year: "2025" },
 ];
 
-// Mock data for recent games (Bar Chart)
 const RECENT_GAMES = [
   { opponent: "BOS", teamScore: 112, oppScore: 108, result: "W" },
   { opponent: "MIA", teamScore: 105, oppScore: 102, result: "W" },
@@ -110,7 +41,6 @@ const RECENT_GAMES = [
   { opponent: "TOR", teamScore: 118, oppScore: 110, result: "W" },
 ];
 
-// Mock data for team stats (Radar Chart)
 const TEAM_STATS = [
   { subject: "Offense", A: 95, fullMark: 100 },
   { subject: "Defense", A: 88, fullMark: 100 },
@@ -120,7 +50,6 @@ const TEAM_STATS = [
   { subject: "Shooting", A: 85, fullMark: 100 },
 ];
 
-// Team specific details
 const TEAM_DETAILS: Record<
   string,
   {
@@ -175,7 +104,7 @@ export default function TeamTracker() {
 
   const currentStats = TEAM_DETAILS[selectedTeam] || DEFAULT_STATS;
 
-  const data = MOCK_DATA.map((item, index) => ({
+  const trajectoryData = MOCK_DATA.map((item, index) => ({
     ...item,
     wins2024: showComparison ? MOCK_HISTORICAL_DATA[index]?.wins : undefined,
     winsComparison: comparisonTeam
@@ -185,366 +114,27 @@ export default function TeamTracker() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Controls */}
-      <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 bg-white/5 rounded-full p-2 border border-white/10">
-              <Image
-                src={getTeamLogo(selectedTeam)}
-                alt={`${selectedTeam} Logo`}
-                fill
-                className="object-contain p-2"
-              />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-white flex items-center gap-2">
-                {selectedTeam}{" "}
-                <span className="text-neon-green">Dashboard</span>
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">
-                2025-26 Season Analysis
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="bg-neon-green/10 hover:bg-neon-green/20 text-neon-green border border-neon-green/50 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            {isEditing ? <X size={16} /> : <Plus size={16} />}
-            {isEditing ? "Close Options" : "Customize View"}
-          </button>
-        </div>
+      <TrackerHeader
+        selectedTeam={selectedTeam}
+        comparisonTeam={comparisonTeam}
+        isEditing={isEditing}
+        showComparison={showComparison}
+        onSelectedTeamChange={setSelectedTeam}
+        onComparisonTeamChange={setComparisonTeam}
+        onToggleEditing={() => setIsEditing(!isEditing)}
+        onToggleComparison={() => setShowComparison(!showComparison)}
+      />
 
-        {isEditing && (
-          <div className="mt-6 p-6 bg-black/40 rounded-lg border border-white/10 animate-fade-in backdrop-blur-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Primary Team Selection */}
-              <div className="space-y-3">
-                <h3 className="text-neon-green font-semibold text-sm uppercase tracking-wider">
-                  Primary Team
-                </h3>
-                <div className="relative">
-                  <select
-                    value={selectedTeam}
-                    onChange={(e) => setSelectedTeam(e.target.value)}
-                    className="w-full bg-black/50 border border-white/20 text-white rounded-lg px-4 py-3 focus:border-neon-green outline-none transition-colors appearance-none cursor-pointer hover:border-white/40"
-                  >
-                    <optgroup label="Eastern Conference">
-                      {EASTERN_CONFERENCE.map((team) => (
-                        <option key={team.id} value={team.name}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Western Conference">
-                      {WESTERN_CONFERENCE.map((team) => (
-                        <option key={team.id} value={team.name}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Select the main team to analyze for the 2025-26 season.
-                </p>
-              </div>
+      <TrackerStats stats={currentStats} />
 
-              {/* Comparison Options */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-blue-400 font-semibold text-sm uppercase tracking-wider">
-                    Comparison
-                  </h3>
-                  {comparisonTeam && (
-                    <button
-                      onClick={() => setComparisonTeam(null)}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
-                    >
-                      <X size={12} /> Clear
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="relative">
-                    <select
-                      value={comparisonTeam || ""}
-                      onChange={(e) =>
-                        setComparisonTeam(e.target.value || null)
-                      }
-                      className="w-full bg-black/50 border border-white/20 text-white rounded-lg px-4 py-3 focus:border-blue-500 outline-none transition-colors appearance-none cursor-pointer hover:border-white/40"
-                    >
-                      <option value="">Select Team to Compare...</option>
-                      <optgroup label="Eastern Conference">
-                        {EASTERN_CONFERENCE.filter(
-                          (t) => t.name !== selectedTeam
-                        ).map((team) => (
-                          <option key={team.id} value={team.name}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Western Conference">
-                        {WESTERN_CONFERENCE.filter(
-                          (t) => t.name !== selectedTeam
-                        ).map((team) => (
-                          <option key={team.id} value={team.name}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setShowComparison(!showComparison)}
-                    className={`w-full px-4 py-2 rounded-lg border transition-all text-sm font-medium flex items-center justify-center gap-2 ${
-                      showComparison
-                        ? "bg-white/10 text-white border-white/30"
-                        : "bg-transparent text-gray-400 border-white/10 hover:border-white/30"
-                    }`}
-                  >
-                    {showComparison ? (
-                      <>
-                        <span className="w-2 h-2 rounded-full bg-neon-green"></span>
-                        Hide Historical (2024)
-                      </>
-                    ) : (
-                      "Show Historical (2024)"
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Key Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-gray-400 text-sm">Season Record</p>
-            <Trophy className="text-neon-green h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold text-white">{currentStats.record}</p>
-          <p className="text-neon-green text-xs mt-1">
-            {currentStats.conferenceRank}
-          </p>
-        </div>
-
-        <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-gray-400 text-sm">Win Streak</p>
-            <TrendingUp className="text-blue-500 h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold text-white">{currentStats.streak}</p>
-          <p className="text-gray-500 text-xs mt-1">
-            Last Loss: {currentStats.lastLoss}
-          </p>
-        </div>
-
-        <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-gray-400 text-sm">Offensive Rating</p>
-            <Target className="text-orange-500 h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {currentStats.offRating}
-          </p>
-          <p className="text-neon-green text-xs mt-1">
-            {currentStats.offRatingRank}
-          </p>
-        </div>
-
-        <div className="bg-gray-900/50 p-6 rounded-xl border border-neon-green/20 hover:border-neon-green/50 transition-all">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-gray-400 text-sm">Net Rating</p>
-            <Activity className="text-purple-500 h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {currentStats.netRating}
-          </p>
-          <p className="text-neon-green text-xs mt-1">
-            {currentStats.netRatingRank}
-          </p>
-        </div>
-      </div>
-
-      {/* Main Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Win/Loss Trend (Takes up 2 columns) */}
-        <div className="lg:col-span-2 bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-6">
-            Season Trajectory
-          </h3>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis
-                  dataKey="game"
-                  stroke="#666"
-                  label={{
-                    value: "Games Played",
-                    position: "insideBottom",
-                    offset: -5,
-                    fill: "#666",
-                  }}
-                />
-                <YAxis
-                  stroke="#666"
-                  label={{
-                    value: "Wins",
-                    angle: -90,
-                    position: "insideLeft",
-                    fill: "#666",
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#000",
-                    border: "1px solid #333",
-                  }}
-                  itemStyle={{ color: "#fff" }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="wins"
-                  name={`${selectedTeam} (2025)`}
-                  stroke="#39FF14"
-                  strokeWidth={3}
-                  dot={{ fill: "#39FF14", strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
-                />
-                {comparisonTeam && (
-                  <Line
-                    type="monotone"
-                    dataKey="winsComparison"
-                    name={`${comparisonTeam} (2025)`}
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                )}
-                {showComparison && (
-                  <Line
-                    type="monotone"
-                    dataKey="wins2024"
-                    name="2024 Wins"
-                    stroke="#666"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={{ fill: "#666" }}
-                  />
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Team Stats Radar (Takes up 1 column) */}
-        <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-6">Team Identity</h3>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={TEAM_STATS}>
-                <PolarGrid stroke="#333" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: "#999" }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
-                <Radar
-                  name={selectedTeam}
-                  dataKey="A"
-                  stroke="#39FF14"
-                  strokeWidth={2}
-                  fill="#39FF14"
-                  fillOpacity={0.3}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#000",
-                    border: "1px solid #333",
-                  }}
-                  itemStyle={{ color: "#fff" }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Games Performance */}
-      <div className="bg-gray-900/50 border border-neon-green/20 rounded-xl p-6">
-        <h3 className="text-xl font-bold text-white mb-6">
-          Recent Game Performance
-        </h3>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={RECENT_GAMES}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#333"
-                vertical={false}
-              />
-              <XAxis dataKey="opponent" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip
-                cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
-                contentStyle={{
-                  backgroundColor: "#000",
-                  border: "1px solid #333",
-                }}
-                itemStyle={{ color: "#fff" }}
-              />
-              <Legend />
-              <Bar
-                dataKey="teamScore"
-                name="Points Scored"
-                fill="#39FF14"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="oppScore"
-                name="Opponent Points"
-                fill="#ef4444"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <TrackerCharts
+        selectedTeam={selectedTeam}
+        comparisonTeam={comparisonTeam}
+        showComparison={showComparison}
+        trajectoryData={trajectoryData}
+        recentGames={RECENT_GAMES}
+        teamStats={TEAM_STATS}
+      />
     </div>
   );
 }
