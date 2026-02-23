@@ -9,9 +9,11 @@ from app.services.data_fetcher import (
     get_all_nba_teams,
     find_player_by_name,
     get_recent_games,
+    get_current_standings,
     get_team_details,
-    get_scheduled_games
+    get_scheduled_games,
 )
+from app.services.constants import EAST_TEAM_IDS
 from app.services.feature_engineering import prepare_game_features, prepare_player_features
 from app.services.model_loder import ModelLoader
 from typing import List, Optional
@@ -235,11 +237,8 @@ async def get_recent_nba_games(days_back: int = 3):
 async def get_standings(season: str = "2025-26"):
     """Get current NBA standings by conference"""
     try:
-        from app.services.data_fetcher import get_current_standings
-
         standings_data = await get_current_standings(season)
 
-        # Separate by conference
         east_teams = []
         west_teams = []
 
@@ -251,16 +250,10 @@ async def get_standings(season: str = "2025-26"):
                 "losses": team.get("L", 0),
                 "win_pct": round(team.get("W_PCT", 0), 3),
                 "record": f"{team.get('W', 0)}-{team.get('L', 0)}",
-                "logo": f"https://cdn.nba.com/logos/nba/{team.get('TEAM_ID', '')}/global/L/logo.svg"
+                "logo": f"https://cdn.nba.com/logos/nba/{team.get('TEAM_ID', '')}/global/L/logo.svg",
             }
 
-            # Determine conference (simple logic based on team name/ID)
-            # Eastern Conference team IDs
-            east_ids = [1610612737, 1610612738, 1610612751, 1610612766, 1610612741,
-                        1610612739, 1610612765, 1610612754, 1610612748, 1610612749,
-                        1610612752, 1610612753, 1610612755, 1610612761, 1610612764]
-
-            if team.get("TEAM_ID") in east_ids:
+            if team.get("TEAM_ID") in EAST_TEAM_IDS:
                 east_teams.append(team_info)
             else:
                 west_teams.append(team_info)

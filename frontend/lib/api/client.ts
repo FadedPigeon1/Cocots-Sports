@@ -1,13 +1,13 @@
 import axios from 'axios'
 
-const ML_API_URL = process.env.NEXT_PUBLIC_ML_API_URL || 'http://localhost:8000/api/v1'
+const ML_API_URL = process.env.NEXT_PUBLIC_ML_API_URL || '/api/v1'
 
 export const mlApi = axios.create({
   baseURL: ML_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds
+  timeout: 120000, // 120 seconds
 })
 
 // Request interceptor for adding auth token if needed

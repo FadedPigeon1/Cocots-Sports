@@ -37,6 +37,7 @@ export default function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={true}
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
                     isActive(item.href)
                       ? "border-primary text-primary"
@@ -75,6 +76,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setIsOpen(false)}
                 className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
                   isActive(item.href)

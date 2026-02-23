@@ -59,6 +59,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   href="/predictions"
+                  prefetch={true}
                   className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   Get Predictions
@@ -66,6 +67,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/dashboard"
+                  prefetch={true}
                   className="inline-flex h-12 items-center justify-center rounded-lg border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   View Dashboard
@@ -172,6 +174,7 @@ export default function Home() {
             <div className="flex justify-center gap-4 pt-4">
               <Link
                 href="/signup"
+                prefetch={true}
                 className="inline-flex h-12 items-center justify-center rounded-full bg-foreground text-background px-8 text-sm font-medium transition-colors hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 Get Started for Free
