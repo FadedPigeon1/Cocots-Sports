@@ -112,9 +112,13 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Safety: guarantee loading becomes false within 5 s even if
+    // Supabase is completely unreachable.
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
+
     // Get the initial session first, then listen for changes.
-    // This avoids relying solely on onAuthStateChange which can sometimes
-    // delay the INITIAL_SESSION event.
     const initialize = async () => {
       try {
         const {
@@ -125,15 +129,20 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
+        // Mark loading done as soon as we know the auth state.
+        // Tracked-data fetching happens in the background so the UI
+        // isn't held hostage by Supabase table queries timing out.
+        setLoading(false);
+
         if (currentUser) {
-          await Promise.all([
+          // Fire-and-forget: loads tracked data without blocking the UI.
+          Promise.all([
             loadTrackedTeams(currentUser.id),
             loadTrackedPlayers(currentUser.id),
-          ]);
+          ]).catch((err) => console.error("Error loading tracked data:", err));
         }
       } catch (err) {
         console.error("Error initializing auth:", err);
-      } finally {
         if (mounted) setLoading(false);
       }
     };
@@ -166,6 +175,7 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [supabase, loadTrackedTeams, loadTrackedPlayers]);
