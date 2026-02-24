@@ -52,6 +52,14 @@ async def health_check():
         "model_loaded": True  # Update this based on actual model status
     }
 
+
+@app.post("/api/v1/cache/clear")
+async def clear_cache():
+    """Clear the in-memory NBA data cache (forces fresh fetch on next request)."""
+    from app.services.cache import cache
+    cache.clear()
+    return {"status": "ok", "message": "Cache cleared"}
+
 if __name__ == "__main__":
     import uvicorn
     port_str = os.getenv("PORT", "8000")

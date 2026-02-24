@@ -7,6 +7,7 @@ from nba_api.stats.endpoints import scoreboardv2
 from nba_api.stats.static import teams
 
 from .constants import CUSTOM_HEADERS
+from .cache import cache
 
 
 async def get_scheduled_games(date: Optional[datetime] = None) -> List[Dict[str, Any]]:
@@ -23,6 +24,11 @@ async def get_scheduled_games(date: Optional[datetime] = None) -> List[Dict[str,
         date = datetime.now()
 
     date_str = date.strftime('%m/%d/%Y')
+    cache_key = f"scheduled_games:{date_str}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     games_list = []
 
     try:
@@ -64,6 +70,8 @@ async def get_scheduled_games(date: Optional[datetime] = None) -> List[Dict[str,
     except Exception as e:
         print(f"Error in get_scheduled_games: {e}")
 
+    if games_list:
+        cache.set(cache_key, games_list, ttl=120)  # 2 min for live-ish data
     return games_list
 
 
@@ -77,6 +85,11 @@ async def get_recent_games(days_back: int = 3) -> List[Dict[str, Any]]:
     Returns:
         List of completed game results with team scores.
     """
+    cache_key = f"recent_games:{days_back}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     games_list = []
 
     for i in range(days_back):
@@ -114,6 +127,8 @@ async def get_recent_games(days_back: int = 3) -> List[Dict[str, Any]]:
         except Exception as e:
             print(f"Error fetching games for {date_str}: {e}")
 
+    if games_list:
+        cache.set(cache_key, games_list, ttl=300)  # 5 min
     return games_list
 
 

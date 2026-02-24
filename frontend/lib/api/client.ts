@@ -7,7 +7,7 @@ export const mlApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 120000, // 120 seconds
+  timeout: 30000, // 30 seconds — the backend caches NBA data, so repeat calls are fast
 })
 
 // Request interceptor for adding auth token if needed

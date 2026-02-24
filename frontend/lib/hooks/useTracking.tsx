@@ -6,10 +6,16 @@ import {
   useCallback,
   createContext,
   useContext,
+  useRef,
   ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type {
+  User,
+  AuthChangeEvent,
+  Session,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 
 export interface TrackedTeam {
   id: string;
@@ -60,7 +66,10 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   const [trackedPlayers, setTrackedPlayers] = useState<TrackedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const supabase = createClient();
+  // Stable ref — avoids re-creating the client on every render and keeps
+  // useCallback / useEffect dependency arrays stable.
+  const supabaseRef = useRef<SupabaseClient>(createClient());
+  const supabase = supabaseRef.current;
 
   const loadTrackedTeams = useCallback(
     async (userId: string) => {
@@ -103,17 +112,44 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Set up the listener immediately
+    // Get the initial session first, then listen for changes.
+    // This avoids relying solely on onAuthStateChange which can sometimes
+    // delay the INITIAL_SESSION event.
+    const initialize = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          await Promise.all([
+            loadTrackedTeams(currentUser.id),
+            loadTrackedPlayers(currentUser.id),
+          ]);
+        }
+      } catch (err) {
+        console.error("Error initializing auth:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initialize();
+
+    // Listen for subsequent auth changes (sign-in, sign-out, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
         if (!mounted) return;
+        // Skip the initial session event — we already handled it above
+        if (event === "INITIAL_SESSION") return;
 
         const currentUser = session?.user ?? null;
-
-        // Only update state if the user has actually changed to avoid unnecessary re-renders
-        // or if we are in the initial loading state
         setUser(currentUser);
 
         if (currentUser) {
@@ -125,7 +161,6 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
           setTrackedTeams([]);
           setTrackedPlayers([]);
         }
-        setLoading(false);
       },
     );
 

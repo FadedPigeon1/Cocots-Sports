@@ -6,6 +6,5 @@
   "python.analysis.extraPaths": [
     "${workspaceFolder}/ml-api",
     "${workspaceFolder}/ml-api/venv/lib/python3.13/site-packages"
-  ],
-  "python-envs.pythonProjects": []
+  ]
 }

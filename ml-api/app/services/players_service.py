@@ -12,16 +12,25 @@ from nba_api.stats.static import players
 
 from .constants import CUSTOM_HEADERS, DEFAULT_SEASON
 from .teams_service import get_current_season
+from .cache import cache
 
 
 async def get_top_players(season: str = DEFAULT_SEASON) -> List[Dict[str, Any]]:
     """Return the top 50 players by points per game for the given season."""
+    cache_key = f"top_players:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         df = leaguedashplayerstats.LeagueDashPlayerStats(
             season=season, per_mode_detailed='PerGame',
             headers=CUSTOM_HEADERS, timeout=60,
         ).get_data_frames()[0]
-        return df.sort_values('PTS', ascending=False).head(50).to_dict('records')
+        result = df.sort_values('PTS', ascending=False).head(
+            50).to_dict('records')
+        cache.set(cache_key, result, ttl=600)  # 10 min
+        return result
     except Exception as e:
         print(f"Error fetching top players: {e}")
         return []
@@ -107,6 +116,11 @@ async def get_player_details(
     player_id: int, season: str = DEFAULT_SEASON
 ) -> Optional[Dict[str, Any]]:
     """Fetch bio info, season averages, and recent game log for a player."""
+    cache_key = f"player_details:{player_id}:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         df_info = commonplayerinfo.CommonPlayerInfo(
             player_id=player_id, headers=CUSTOM_HEADERS, timeout=60
@@ -155,7 +169,7 @@ async def get_player_details(
                 'games_played': len(df_logs),
             }
 
-        return {
+        result = {
             'info': {
                 'id': int(player_info['PERSON_ID']),
                 'name': player_info['DISPLAY_FIRST_LAST'],
@@ -172,6 +186,8 @@ async def get_player_details(
             'stats': season_stats,
             'recent_games': recent_games,
         }
+        cache.set(cache_key, result, ttl=300)  # 5 min
+        return result
     except Exception as e:
         print(f"Error fetching player details for {player_id}: {e}")
         return None
@@ -199,6 +215,12 @@ async def compare_players(
     player_ids: List[int], season: str = DEFAULT_SEASON
 ) -> Dict[str, Any]:
     """Compare multiple players' stats for a season, including game-by-game data."""
+    ids_key = ",".join(str(i) for i in sorted(player_ids))
+    cache_key = f"compare_players:{ids_key}:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         players_data = []
 
@@ -261,7 +283,10 @@ async def compare_players(
         comparison_data = _build_comparison_data(
             players_data, stat_categories, name_key='name')
 
-        return {'players': players_data, 'comparison_data': comparison_data, 'season': season}
+        result = {'players': players_data,
+                  'comparison_data': comparison_data, 'season': season}
+        cache.set(cache_key, result, ttl=300)  # 5 min
+        return result
     except Exception as e:
         print(f"Error comparing players: {e}")
         return {'players': [], 'comparison_data': [], 'season': season}

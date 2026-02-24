@@ -12,6 +12,7 @@ from nba_api.stats.endpoints import (
 from nba_api.stats.static import teams
 
 from .constants import CUSTOM_HEADERS, DEFAULT_SEASON, EAST_TEAM_IDS, WEST_TEAM_IDS
+from .cache import cache
 
 
 def get_current_season(game_date: Optional[datetime] = None) -> str:
@@ -45,6 +46,11 @@ def get_all_nba_teams() -> List[Dict[str, Any]]:
 
 async def get_current_standings(season: str = DEFAULT_SEASON) -> List[Dict[str, Any]]:
     """Fetch current season standings with conference info, sorted by win %."""
+    cache_key = f"standings:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         team_stats = leaguedashteamstats.LeagueDashTeamStats(
             season=season, headers=CUSTOM_HEADERS, timeout=60)
@@ -57,7 +63,9 @@ async def get_current_standings(season: str = DEFAULT_SEASON) -> List[Dict[str, 
             .astype(int)
         )
 
-        return df.sort_values('W_PCT', ascending=False).to_dict('records')
+        result = df.sort_values('W_PCT', ascending=False).to_dict('records')
+        cache.set(cache_key, result, ttl=600)  # 10 min
+        return result
     except Exception as e:
         print(f"Error fetching standings: {e}")
         return []
@@ -74,6 +82,11 @@ async def get_team_details(team_id: int, season: str = DEFAULT_SEASON) -> Dict[s
     Returns:
         Dict with 'team' summary and 'recent_games' list.
     """
+    cache_key = f"team_details:{team_id}:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         team_stats = leaguedashteamstats.LeagueDashTeamStats(
             season=season, headers=CUSTOM_HEADERS, timeout=60)
@@ -126,7 +139,7 @@ async def get_team_details(team_id: int, season: str = DEFAULT_SEASON) -> Dict[s
         home_wins, home_losses = _split_record(df_games, 'vs.')
         away_wins, away_losses = _split_record(df_games, '@')
 
-        return {
+        result = {
             'team': {
                 'team_id': str(team_id),
                 'team_name': team.get('TEAM_NAME', ''),
@@ -149,6 +162,8 @@ async def get_team_details(team_id: int, season: str = DEFAULT_SEASON) -> Dict[s
             },
             'recent_games': recent_games,
         }
+        cache.set(cache_key, result, ttl=300)  # 5 min
+        return result
     except Exception as e:
         print(f"Error fetching team details for {team_id}: {e}")
         raise
@@ -224,11 +239,18 @@ async def fetch_game_data(
 
 async def fetch_team_roster(team_id: int, season: str = DEFAULT_SEASON) -> List[Dict[str, Any]]:
     """Return the current roster for a team."""
+    cache_key = f"roster:{team_id}:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         roster = CommonTeamRoster(
             team_id=team_id, season=season, headers=CUSTOM_HEADERS, timeout=60)
         df = roster.get_data_frames()[0]
-        return df.to_dict('records') if not df.empty else []
+        result = df.to_dict('records') if not df.empty else []
+        cache.set(cache_key, result, ttl=600)  # 10 min
+        return result
     except Exception as e:
         print(f"Error fetching roster for team {team_id}: {e}")
         return []
@@ -242,6 +264,12 @@ async def get_team_season_stats(team_id: int) -> List[str]:
 
 async def compare_teams(team_ids: List[int], season: str = DEFAULT_SEASON) -> Dict[str, Any]:
     """Compare multiple teams' stats for a season, including game-by-game trend."""
+    ids_key = ",".join(str(i) for i in sorted(team_ids))
+    cache_key = f"compare_teams:{ids_key}:{season}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         df_all = leaguedashteamstats.LeagueDashTeamStats(
             season=season, headers=CUSTOM_HEADERS, timeout=60
@@ -287,7 +315,7 @@ async def compare_teams(team_ids: List[int], season: str = DEFAULT_SEASON) -> Di
             }
             teams_data.append(stats)
 
-        return {
+        result = {
             'teams': teams_data,
             'comparison_data': _build_comparison_data(
                 teams_data, ['ppg', 'fg_pct', 'fg3_pct',
@@ -296,6 +324,8 @@ async def compare_teams(team_ids: List[int], season: str = DEFAULT_SEASON) -> Di
             ),
             'season': season,
         }
+        cache.set(cache_key, result, ttl=300)  # 5 min
+        return result
     except Exception as e:
         print(f"Error comparing teams: {e}")
         return {'teams': [], 'comparison_data': [], 'season': season}

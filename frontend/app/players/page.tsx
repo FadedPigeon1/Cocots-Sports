@@ -10,14 +10,20 @@ export default function Players() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
+        setLoading(true);
+        setError(null);
         const data = await getPlayers();
         setPlayers(data);
       } catch (error) {
         console.error("Failed to fetch players:", error);
+        setError(
+          "Failed to load players. The server may be warming up — try again in a moment.",
+        );
       } finally {
         setLoading(false);
       }
@@ -63,6 +69,19 @@ export default function Players() {
           </button>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg flex items-center justify-between">
+          <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-sm underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">

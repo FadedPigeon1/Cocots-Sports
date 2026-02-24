@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { useTracking } from "@/lib/hooks/useTracking";
 
 export default function ProtectedRoute({
   children,
@@ -11,45 +10,19 @@ export default function ProtectedRoute({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useTracking();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
+    if (loading) return; // still initialising
+    if (!user) {
+      router.push("/login");
+    } else {
+      setReady(true);
+    }
+  }, [user, loading, router]);
 
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-      } else {
-        setUser(user);
-      }
-
-      setLoading(false);
-    };
-    checkAuth();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        if (event === "SIGNED_OUT") {
-          router.push("/login");
-        } else if (session?.user) {
-          setUser(session.user);
-        }
-        setLoading(false);
-      },
-    );
-
-    return () => subscription.unsubscribe();
-  }, [router]);
-
-  if (loading) {
+  if (loading || !ready) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -58,10 +31,6 @@ export default function ProtectedRoute({
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return <>{children}</>;
