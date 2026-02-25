@@ -5,16 +5,19 @@ DEFAULT_SEASON = "2025-26"
 # Required by stats.nba.com to avoid request blocking / timeouts
 CUSTOM_HEADERS = {
     'Host': 'stats.nba.com',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'application/json, text/plain, */*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Accept-Encoding': 'gzip, deflate, br',
     'Connection': 'keep-alive',
     'Referer': 'https://www.nba.com/',
-    'Origin': 'https://www.nba.com',
+    'Origin': 'https://stats.nba.com',
+    'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site',
+    'Sec-Fetch-Site': 'same-origin',
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache',
 }
